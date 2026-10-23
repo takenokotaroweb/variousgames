@@ -1,0 +1,45 @@
+# 検証用サーバで確認するときに、web/ と同じフォルダに .htaccess という名前で置く見本。
+# GML 開発指示書 12.2 と同じ内容。web/ の中には入れないこと [GIT-3]。本番の設定は GML が行う。
+
+# ===== セキュリティヘッダー =====
+<IfModule mod_headers.c>
+  # コンテンツは同一オリジンで自己完結（外部CDN・外部通信・eval・インラインscriptなし）
+  Header always set Content-Security-Policy "default-src 'self'; img-src 'self' data:; media-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'self'; form-action 'none'"
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+  Header always set Cross-Origin-Opener-Policy "same-origin"
+  Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+
+  # ===== キャッシュ =====
+  <FilesMatch "\.html$">
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+  </FilesMatch>
+  <FilesMatch "\.json$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+  <FilesMatch "\.(js|css|png|jpg|jpeg|webp|svg|gif|mp3|ogg|m4a|wav|woff|woff2)$">
+    Header set Cache-Control "public, max-age=2592000"
+  </FilesMatch>
+</IfModule>
+
+# ===== 公開してはいけないファイルを遮断 =====
+<FilesMatch "(^\.|\.(md|bak|old|orig|log|sql|sh|ps1|map|env|ini|zip|tar|gz|psd|ai)$)">
+  Require all denied
+</FilesMatch>
+
+# ===== 文字コードとMIME =====
+AddDefaultCharset UTF-8
+<IfModule mod_mime.c>
+  AddType application/javascript .js .mjs
+  AddType application/json .json
+  AddType image/svg+xml .svg
+  AddType font/woff .woff
+  AddType font/woff2 .woff2
+</IfModule>
+
+# ===== 圧縮 =====
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json image/svg+xml
+</IfModule>

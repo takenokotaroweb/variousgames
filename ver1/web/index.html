@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Space Patrol</title>
+<link rel="stylesheet" href="css/style.css?v=5">
+</head>
+<body class="kbd">
+<div id="stage">
+
+  <!-- 遊ぶ場所(星空・宇宙人・自分の船)。内部の解像度は 1280x720 -->
+  <canvas id="field" width="1280" height="720" data-i18n-aria="field_aria"></canvas>
+
+  <!-- 読み込み中 -->
+  <section id="loading" class="screen on">
+    <p data-i18n="loading">Loading…</p>
+    <div class="loadbar"><div id="loadFill"></div></div>
+  </section>
+
+  <!-- タイトル -->
+  <section id="title" class="screen">
+    <h1 id="titleH"><img class="logo" src="" alt="" data-i18n-alt="title"><span class="txt" data-i18n="title"></span></h1>
+    <p class="lead" data-i18n="lead"></p>
+    <div class="points" id="points"></div>
+    <div class="row">
+      <button type="button" class="btn big nav" id="startBtn" data-i18n="start"></button>
+      <button type="button" class="btn sub nav" id="exitBtn" data-i18n="exit"></button>
+    </div>
+    <div class="settings">
+      <button type="button" class="choice nav" id="setLevel"><span class="cLabel" data-i18n="set_level"></span><span class="cArrow l" aria-hidden="true"></span><span class="cVal"></span><span class="cArrow r" aria-hidden="true"></span></button>
+      <button type="button" class="choice nav" id="setAuto"><span class="cLabel" data-i18n="set_auto"></span><span class="cArrow l" aria-hidden="true"></span><span class="cVal"></span><span class="cArrow r" aria-hidden="true"></span></button>
+      <button type="button" class="choice nav" id="setMusic"><span class="cLabel" data-i18n="set_music"></span><span class="cArrow l" aria-hidden="true"></span><span class="cVal"></span><span class="cArrow r" aria-hidden="true"></span></button>
+      <button type="button" class="choice nav" id="setSound"><span class="cLabel" data-i18n="set_sound"></span><span class="cArrow l" aria-hidden="true"></span><span class="cVal"></span><span class="cArrow r" aria-hidden="true"></span></button>
+    </div>
+    <p class="howto" id="howto"></p>
+    <p class="bestLine" id="bestLine"></p>
+  </section>
+
+  <!-- ゲーム(遊ぶ場所の上に重ねる表示) -->
+  <section id="game" class="screen">
+    <div id="hud">
+      <div class="hItem"><span class="hLabel" data-i18n="score"></span><span class="hVal" id="scoreV"></span></div>
+      <div class="hItem"><span class="hLabel" data-i18n="best"></span><span class="hVal" id="bestV"></span></div>
+      <div class="hItem"><span class="hVal" id="waveV"></span></div>
+      <div class="hItem"><span class="hLabel" data-i18n="lives"></span><span class="hVal" id="livesV"></span></div>
+      <div class="hTools">
+        <button type="button" class="tbtn icon" id="soundBtn" data-i18n-aria="sound_on"><img id="soundImg" src="img/ui/sound-on.svg" alt=""></button>
+        <button type="button" class="tbtn wide" id="pauseBtn" data-i18n="pause"></button>
+      </div>
+    </div>
+    <div class="banner" id="banner"><span id="bannerText"></span></div>
+    <div class="toast" id="toast" role="status"><span id="toastText"></span></div>
+    <!-- タッチ・マウス用の操作ボタン(タッチで操作したときだけ出す) -->
+    <div id="touchBar">
+      <button type="button" class="pad" id="tLeft" data-i18n-aria="move_left"><span class="tri l"></span></button>
+      <button type="button" class="pad" id="tRight" data-i18n-aria="move_right"><span class="tri r"></span></button>
+      <button type="button" class="pad fire" id="tFire" data-i18n="fire"></button>
+    </div>
+  </section>
+
+  <!-- 一時停止 -->
+  <div class="overlay" id="pauseDlg" role="dialog" aria-modal="true">
+    <div class="box">
+      <p class="boxTitle" data-i18n="paused"></p>
+      <div class="col">
+        <button type="button" class="btn big nav" id="resumeBtn" data-i18n="resume"></button>
+        <button type="button" class="choice nav" id="pMusic"><span class="cLabel" data-i18n="set_music"></span><span class="cArrow l" aria-hidden="true"></span><span class="cVal"></span><span class="cArrow r" aria-hidden="true"></span></button>
+        <button type="button" class="choice nav" id="pSound"><span class="cLabel" data-i18n="set_sound"></span><span class="cArrow l" aria-hidden="true"></span><span class="cVal"></span><span class="cArrow r" aria-hidden="true"></span></button>
+        <div class="row">
+          <button type="button" class="btn sub nav" id="restartBtn" data-i18n="restart"></button>
+          <button type="button" class="btn sub nav" id="pTitleBtn" data-i18n="to_title"></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ゲームオーバー -->
+  <div class="overlay" id="overDlg" role="dialog" aria-modal="true">
+    <div class="box">
+      <p class="boxTitle" data-i18n="game_over"></p>
+      <p class="overWhy" id="overWhy"></p>
+      <p class="overScore" id="overScore"></p>
+      <p class="newBest" id="newBest" data-i18n="new_best"></p>
+      <div class="row">
+        <button type="button" class="btn big nav" id="againBtn" data-i18n="again"></button>
+        <button type="button" class="btn sub nav" id="oTitleBtn" data-i18n="to_title"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- メッセージ -->
+  <div class="overlay" id="dlg" role="dialog" aria-modal="true">
+    <div class="box"><p id="dlgText"></p><div class="actions"><button type="button" class="btn big nav" id="dlgOk" data-i18n="ok"></button></div></div>
+  </div>
+
+</div>
+<script src="js/i18n.js?v=5"></script>
+<script src="js/game.js?v=6"></script>
+</body>
+</html>
