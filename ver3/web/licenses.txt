@@ -33,6 +33,10 @@
     作成方法: 本ゲーム用に作曲・作成(開発時に AI〈Anthropic 社の Claude〉が作曲し、tools/make_bgm.py で音を合成)
     外部の音源・サンプル・既存の曲は使っていない
     商用利用・再配布: 可
+  audio/gameover.mp3(ゲームオーバーのジングル、約3秒)
+    作成方法: 本ゲーム用に作曲・作成(開発時に AI〈Anthropic 社の Claude〉が作曲し、tools/make_jingle.py で音を合成)
+    外部の音源・サンプル・既存の曲は使っていない
+    商用利用・再配布: 可
   効果音: 音声ファイルなし(ブラウザの Web Audio API で、その場で合成しています)
     作成方法: 本ゲーム用に作成(開発時に AI〈Anthropic 社の Claude〉が作成)
     商用利用・再配布: 可

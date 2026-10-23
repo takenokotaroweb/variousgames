@@ -1,4 +1,4 @@
-/* 宇宙パトロール — ゲーム本体(ver07: インベーダー型のシューティング。BGM あり)
+/* 宇宙パトロール — ゲーム本体(ver08: インベーダー型のシューティング。BGM あり)
  * 遊び方: 自分の船を左右に動かし、光線で宇宙人を星に変える。宇宙人の群れは左右に動きながら少しずつ下りてくる。
  *         群れを全部星に変えると次の波へ。宇宙人の弾に当たると船が1つ減る。宇宙人が地上に着くか、船が無くなるとゲームオーバー。
  * 操作: 左右キー=移動、決定か上キー=撃つ(押しっぱなしで連射)、下キー=BGM のオン・オフ、戻る=一時停止。タッチ・マウスは画面のタップ・クリックで撃つ(船は動かない)、下の ◀ ▶ ボタンで移動。
@@ -166,6 +166,41 @@
         if (bgm.paused) { var p = bgm.play(); if (p && p.catch) p.catch(function () {}); }
       } catch (e) {}
     } else if (!bgm.paused && !bgmFade) bgmStop();
+  }
+
+  /* ===================== ゲームオーバーのジングル(約3秒。tools/make_jingle.py で作ったもの) ===================== */
+  // 効果音か BGM のどちらかがオンなら鳴らす(両方オフのときだけ鳴らさない)。BGM と同じ Audio の仕組みで鳴らす
+  var JINGLE_VOL = 0.6;
+  var JINGLE_DELAY_MS = 300;  // BGM が小さくなり始めてから鳴らす
+  var jingle = null, jinglePrimed = false, jingleTimer = 0;
+  try { jingle = new Audio(); jingle.src = 'audio/gameover.mp3?v=1'; jingle.preload = 'auto'; jingle.volume = JINGLE_VOL; } catch (e) { jingle = null; }
+  // ボタン操作の中で一度だけ、消音のまま鳴らしてすぐ止めておく
+  // (操作の直後でないと音を出せない端末でも、ゲームオーバーのときに鳴らせるように)
+  function jinglePrime() {
+    if (!jingle || jinglePrimed) return;
+    try {
+      jingle.muted = true;
+      var p = jingle.play();
+      var done = function () { try { jingle.pause(); jingle.currentTime = 0; } catch (e) {} jingle.muted = false; jinglePrimed = true; };
+      if (p && p.then) p.then(done, function () { jingle.muted = false; }); else done();
+    } catch (e) {}
+  }
+  function jingleStop() {
+    if (jingleTimer) { clearTimeout(jingleTimer); jingleTimer = 0; }
+    if (jingle) { try { jingle.pause(); jingle.currentTime = 0; } catch (e) {} }
+  }
+  function playGameOverJingle() {
+    jingleStop();
+    if (!(settings.sound || settings.music)) return;
+    jingleTimer = setTimeout(function () {
+      jingleTimer = 0;
+      if (document.hidden || G.mode !== 'over') return;
+      if (!jingle) { sfx('over'); return; }
+      try {
+        jingle.muted = false; jingle.currentTime = 0; jingle.volume = JINGLE_VOL;
+        var p = jingle.play(); if (p && p.catch) p.catch(function () { sfx('over'); });   // 鳴らせなかったら短い効果音
+      } catch (e) { sfx('over'); }
+    }, JINGLE_DELAY_MS);
   }
 
   /* ===================== 絵(ドット絵を canvas に描いておく) ===================== */
@@ -343,7 +378,7 @@
     stopHolds();
     setMode('over');
     bgmFadeOut();
-    sfx('over');
+    playGameOverJingle();
   }
   function stepFleet() {
     var alive = [], i;
@@ -593,7 +628,7 @@
     if (document.hidden) {
       stopHolds(); stopDir(); held = {};
       if (isOn('game') && !topOverlay() && G.mode !== 'over') openPause(true);
-      bgmStop(); audioSuspend();
+      bgmStop(); jingleStop(); audioSuspend();
     } else { lastT = now(); audioResume(); }
   });
 
@@ -704,7 +739,7 @@
   }
   function closeOverlays() { removeClass($('pauseDlg'), 'on'); removeClass($('overDlg'), 'on'); removeClass($('dlg'), 'on'); }
   function beginPlay() {
-    ensureAudio();
+    ensureAudio(); jinglePrime(); jingleStop();   // もう一度・最初から のときは、鳴っているジングルを止める
     closeOverlays(); stopHolds();
     G.paused = false; hudLast = {};
     showScreen('game'); clearFocus();
