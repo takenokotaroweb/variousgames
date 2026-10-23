@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Find the Differences</title>
+<link rel="stylesheet" href="css/style.css?v=13">
+</head>
+<body class="kbd">
+<div id="stage">
+
+  <!-- 読み込み中 -->
+  <section id="loading" class="screen on">
+    <p data-i18n="loading">Loading…</p>
+    <div class="loadbar"><div id="loadFill"></div></div>
+  </section>
+
+  <!-- タイトル -->
+  <section id="title" class="screen">
+    <div class="pairImg"><img src="img/stages/title-a.jpg" alt=""><img src="img/stages/title-b.jpg" alt=""></div>
+    <h1 id="titleH"><img class="logo" src="img/ui/title-en.svg" alt="" data-i18n-alt="title"><span class="txt" data-i18n="title"></span></h1>
+    <p class="lead" id="lead"></p>
+    <div class="row">
+      <button type="button" class="btn big nav" id="startBtn" data-i18n="start"></button>
+      <button type="button" class="btn sub nav" id="exitBtn" data-i18n="exit"></button>
+    </div>
+    <p class="howto" id="howto"></p>
+  </section>
+
+  <!-- ゲーム -->
+  <section id="game" class="screen">
+    <div class="pic" id="pic">
+      <img class="scene" id="imgQ" src="" alt="" draggable="false">
+      <img class="scene ans" id="imgA" src="" alt="" draggable="false">
+      <div class="shade" id="shade"></div>
+      <div class="banner" id="banner"><span class="bno" id="bannerNo"></span></div>
+      <div class="pausedTag" id="pausedTag"><span data-i18n="paused"></span></div>
+      <div class="timeup" id="timeup"><span data-i18n="time_up"></span></div>
+    </div>
+    <div id="bar">
+      <div class="stageName" id="stageName"></div>
+      <!-- 見ている間: 残り時間 -->
+      <div class="timer" id="timer">
+        <div class="track"><div class="fill" id="fill"></div></div>
+        <div class="secs" id="secs"></div>
+      </div>
+      <!-- 答え: 説明 -->
+      <div class="ansNote" id="ansNote" data-i18n="answer_note"></div>
+      <div class="tools">
+        <button type="button" class="tbtn wide nav" id="pauseBtn"></button>
+        <button type="button" class="tbtn icon nav" id="soundBtn" data-i18n-aria="sound_on"><img id="soundImg" src="img/ui/sound-on.svg" alt=""></button>
+        <button type="button" class="tbtn quit nav" id="quitBtn" data-i18n="quit"></button>
+        <button type="button" class="tbtn wide nav" id="nextBtn"></button>
+        <button type="button" class="tbtn quit nav" id="toTitleBtn" data-i18n="to_title"></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 答え合わせ(TIME UP! と答えの間に挟むページ。下のバーは見えたまま) -->
+  <div class="checkPage" id="checkPage">
+    <div class="ring r1"></div><div class="ring r2"></div><div class="ring r3"></div>
+    <p class="ckTitle" data-i18n="check_title"></p>
+    <p class="ckSub" data-i18n="check_sub"></p>
+  </div>
+
+  <!-- メッセージ -->
+  <div class="overlay" id="dlg" role="dialog" aria-modal="true">
+    <div class="box"><p id="dlgText"></p><div class="actions"><button type="button" class="btn big nav" id="dlgOk" data-i18n="ok"></button></div></div>
+  </div>
+
+  <!-- やめる確認 -->
+  <div class="overlay" id="quitDlg" role="dialog" aria-modal="true">
+    <div class="box"><p data-i18n="quit_question"></p>
+      <div class="actions"><button type="button" class="btn sub nav" id="quitNo" data-i18n="quit_continue"></button><button type="button" class="btn big nav" id="quitYes" data-i18n="quit_to_title"></button></div></div>
+  </div>
+
+</div>
+<script src="js/i18n.js?v=13"></script>
+<script src="js/game.js?v=13"></script>
+</body>
+</html>
