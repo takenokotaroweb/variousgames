@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Treasure Hunt at Home</title>
+<link rel="stylesheet" href="css/style.css?v=55">
+</head>
+<body class="kbd">
+<div id="stage">
+
+  <!-- 読み込み中 -->
+  <section id="loading" class="screen on">
+    <p data-i18n="loading">Loading…</p>
+    <div class="loadbar"><div id="loadFill"></div></div>
+  </section>
+
+  <!-- タイトル -->
+  <section id="title" class="screen">
+    <img class="houseImg" src="img/ui/house.svg" alt="">
+    <h1 id="titleH"><img class="logo" src="img/ui/title-en.svg" alt="" data-i18n-alt="title"><span class="txt" data-i18n="title"></span></h1>
+    <p class="lead" data-i18n="lead"></p>
+    <div class="row">
+      <button type="button" class="btn big nav" id="startBtn" data-i18n="start"></button>
+      <button type="button" class="btn sub nav" id="exitBtn" data-i18n="exit"></button>
+    </div>
+    <p class="howto" data-i18n="howto"></p>
+    <p class="records"><span id="bestTime"></span><span id="bestCount"></span></p>
+    <button type="button" class="linkBtn nav" id="resetBtn" data-i18n="reset_records"></button>
+  </section>
+
+  <!-- ゲーム -->
+  <section id="game" class="screen">
+    <div id="roomArea"><div id="roomName"></div></div>
+    <button type="button" class="arrow left" id="prevRoom" tabindex="-1" data-i18n-aria="prev_room"><i></i></button>
+    <button type="button" class="arrow right" id="nextRoom" tabindex="-1" data-i18n-aria="next_room"><i></i></button>
+
+    <div id="bar">
+      <div class="rooms" id="roomBtns"></div>
+      <div class="group slots"><b data-i18n="bar_items"></b><div class="grid2" id="slots"></div></div>
+      <div class="group nums"><b data-i18n="bar_numbers"></b><div class="grid2" id="nums"></div></div>
+      <div class="group orderBox hide" id="orderBox"><b data-i18n="bar_order"></b><div class="dots" id="dots"></div></div>
+      <div class="stats">
+        <div class="stat" id="timeStat"><img src="img/ui/clock.svg" alt="" data-i18n-alt="bar_time"><span id="time">0:00</span></div>
+        <div class="stat" id="starStat"><img src="img/ui/sparkle.svg" alt="" data-i18n-alt="bar_stars"><span id="stars">0/8</span></div>
+      </div>
+      <div class="tools">
+        <button type="button" class="tbtn wide nav" id="hintBtn"><img src="img/ui/bulb.svg" alt=""><span data-i18n="hint"></span></button>
+        <button type="button" class="tbtn icon nav" id="soundBtn" data-i18n-aria="sound_on"><img id="soundImg" src="img/ui/sound-on.svg" alt=""></button>
+        <button type="button" class="tbtn quit nav" id="quitBtn" data-i18n="quit"></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- メッセージ -->
+  <div class="overlay" id="dlg" role="dialog" aria-modal="true">
+    <div class="box"><p id="dlgText"></p><div class="actions"><button type="button" class="btn big nav" id="dlgOk" data-i18n="ok"></button><button type="button" class="btn sub nav hide" id="dlgOff" data-i18n="letter_off"></button></div></div>
+  </div>
+
+  <!-- 壁に映し出された家主のメッセージ(部屋の絵の上に重ねる) -->
+  <div class="overlay letterOv" id="letterDlg" role="dialog" aria-modal="true">
+    <div class="projection">
+      <p class="letterBody" id="letterBody"></p>
+      <div class="actions"><button type="button" class="btn sub nav" id="letterOk" data-i18n="letter_close"></button><button type="button" class="btn sub nav" id="letterOff" data-i18n="letter_off"></button></div>
+    </div>
+  </div>
+
+  <!-- やめる確認 -->
+  <div class="overlay" id="quitDlg" role="dialog" aria-modal="true">
+    <div class="box"><p data-i18n="quit_question"></p><p class="note" data-i18n="quit_note"></p>
+      <div class="actions"><button type="button" class="btn sub nav" id="quitNo" data-i18n="quit_continue"></button><button type="button" class="btn big nav" id="quitYes" data-i18n="quit_to_title"></button></div></div>
+  </div>
+
+  <!-- 記録リセットの確認 -->
+  <div class="overlay" id="cfmDlg" role="dialog" aria-modal="true">
+    <div class="box"><p data-i18n="reset_question"></p><p class="note" data-i18n="reset_note"></p>
+      <div class="actions"><button type="button" class="btn sub nav" id="cfmNo" data-i18n="reset_cancel"></button><button type="button" class="btn big nav" id="cfmYes" data-i18n="reset_delete"></button></div></div>
+  </div>
+
+  <!-- 宝箱のダイヤル -->
+  <div class="overlay" id="padDlg" role="dialog" aria-modal="true">
+    <div class="box" id="padBox">
+      <div class="padTitle"><img src="img/ui/chest.svg" alt=""><span data-i18n="pad_title"></span></div>
+      <div class="code" id="code"></div>
+      <div class="padErr" id="padErr"></div>
+      <div class="pad" id="pad"></div>
+      <div class="actions"><button type="button" class="btn sub nav" id="padClose" data-i18n="pad_close"></button><button type="button" class="btn big nav" id="padOk" data-i18n="pad_open"></button></div>
+    </div>
+  </div>
+
+  <!-- クリア -->
+  <div class="overlay" id="winDlg" role="dialog" aria-modal="true">
+    <div class="box" id="winBox">
+      <div class="winMain">
+        <div class="trophy" id="trophy"><div class="halo"></div><img id="trophyImg" src="img/ui/chest.svg" alt=""></div>
+        <p class="tname" id="tName"></p>
+        <p class="wsmall" id="tDesc"></p>
+        <div class="results" id="results"></div>
+        <p class="wsmall" id="rank"></p>
+        <div class="actions"><button type="button" class="btn big nav" id="againBtn" data-i18n="win_again"></button><button type="button" class="btn sub nav" id="toTitleBtn" data-i18n="win_title"></button></div>
+      </div>
+      <div class="winSide">
+        <p class="wsmall" id="zukanTitle"></p>
+        <div class="zukan" id="zukan"></div>
+        <div class="ownerBadge hide" id="ownerBadge"><img class="obJa" src="img/ui/owner-emblem-ja.svg" alt=""><div class="obEn"><img src="img/ui/owner-medal.svg" alt=""><span data-i18n="win_owner_msg"></span></div></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+<script src="js/i18n.js?v=55"></script>
+<script src="js/game.js?v=55"></script>
+</body>
+</html>

@@ -1,0 +1,334 @@
+/* おうちの宝さがし — 画面の見た目
+ * 寸法はすべて --u（ステージ幅の1%）で指定する。px は 1px の罫線だけ。
+ * 古いWebViewに合わせ、inset / aspect-ratio / dvh / :focus-visible は使わない。
+ */
+:root {
+  --u: min(1vw, 1.7778vh);  /* min() が使えない古い端末では game.js が値を入れる */
+  --bg: #D6E8F0;
+  --panel: #FFFFFF;
+  --ink: #1F2A44;
+  --muted: #45516D;
+  --line: #9FB4C4;
+  --room: #96BED2;
+  --focus: #FF4F98;
+}
+
+/* 同梱した書体(Zen Maru Gothic、SIL OFL 1.1)。ゲームで使う文字だけに絞ったもの。作り直しは tools/make_fonts.py */
+@font-face { font-family: "Zen Maru Gothic"; font-weight: 500; font-style: normal; font-display: block;
+  src: url("../fonts/zenmaru-500.woff?v=55") format("woff"); }
+@font-face { font-family: "Zen Maru Gothic"; font-weight: 700; font-style: normal; font-display: block;
+  src: url("../fonts/zenmaru-700.woff?v=55") format("woff"); }
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
+  background: var(--bg); color: var(--ink);
+  font-family: "Zen Maru Gothic", "Noto Sans JP", "Noto Sans", "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif;
+  font-weight: 500;
+  -webkit-user-select: none; user-select: none;
+  touch-action: none; -webkit-tap-highlight-color: transparent;
+}
+button { font-family: inherit; color: inherit; margin: 0; }
+img { -webkit-user-drag: none; }
+
+/* ステージ: 16:9 を画面の中央に置く。16:9 以外の画面では周りが余白になる */
+#stage {
+  position: absolute; left: 50%; top: 50%;
+  -webkit-transform: translate(-50%, -50%); transform: translate(-50%, -50%);
+  width: calc(var(--u) * 100); height: calc(var(--u) * 56.25);
+  overflow: hidden; background: var(--bg);
+}
+
+.screen { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: none; }
+.screen.on { display: block; }
+
+/* ---------- 読み込み中 ---------- */
+#loading.on { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+#loading p { font-size: calc(var(--u) * 2.4); font-weight: 700; margin: 0 0 calc(var(--u) * 2); }
+.loadbar { width: calc(var(--u) * 40); height: calc(var(--u) * 1.2); background: #fff; border: 1px solid var(--line); border-radius: calc(var(--u) * 1); overflow: hidden; }
+#loadFill { width: 0; height: 100%; background: var(--ink); }
+
+/* ---------- タイトル ---------- */
+#title.on {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: calc(var(--u) * 3) calc(var(--u) * 6); text-align: center;
+}
+.houseImg { display: block; height: calc(var(--u) * 19); width: auto; margin-bottom: calc(var(--u) * 0.6); }
+#title h1 { margin: 0; font-size: calc(var(--u) * 5.6); font-weight: 700; letter-spacing: 0.04em; line-height: 1.15; }
+/* タイトルは Zen Maru Gothic Black の文字を図形にした画像(言語ごと)。画像が出ないときは文字で出す */
+#title h1 .logo { display: none; height: calc(var(--u) * 5); width: auto; margin: calc(var(--u) * 0.6) auto calc(var(--u) * 0.2); }
+#title h1.useLogo .logo { display: block; }
+#title h1.useLogo .txt { display: none; }
+#title .lead { margin: calc(var(--u) * 1) 0 calc(var(--u) * 2); font-size: calc(var(--u) * 2.1); color: var(--muted); }
+.row { display: flex; justify-content: center; }
+.row .btn + .btn { margin-left: calc(var(--u) * 2.4); }
+.howto { margin: calc(var(--u) * 2) 0 0; max-width: calc(var(--u) * 80); font-size: calc(var(--u) * 1.6); line-height: 1.5; color: var(--muted); }
+.records { margin: calc(var(--u) * 1.2) 0 0; font-size: calc(var(--u) * 1.6); color: var(--muted); min-height: calc(var(--u) * 2.4); }
+.records span + span { margin-left: calc(var(--u) * 2.4); }
+.linkBtn {
+  margin-top: calc(var(--u) * 0.6); background: none; border: none; color: var(--muted); cursor: pointer;
+  font-size: calc(var(--u) * 1.6); text-decoration: underline; padding: calc(var(--u) * 0.15) calc(var(--u) * 0.5);
+  border-radius: calc(var(--u) * 0.8);
+}
+
+/* ---------- ボタン共通 ---------- */
+.btn {
+  font-weight: 700; cursor: pointer; border-radius: calc(var(--u) * 3);
+  min-height: calc(var(--u) * 5); padding: calc(var(--u) * 0.8) calc(var(--u) * 3);
+  font-size: calc(var(--u) * 2.2); line-height: 1.2; white-space: nowrap;
+}
+.btn.big { background: var(--ink); color: #fff; border: calc(var(--u) * 0.3) solid var(--ink); }
+.btn.sub { background: #fff; color: var(--ink); border: calc(var(--u) * 0.3) solid var(--ink); }
+
+/* フォーカス(キー操作中ははっきり、タッチ・マウス操作中は控えめ) */
+.nav { position: relative; outline: none; }
+.nav:focus { outline: none; }
+.nav.is-focus { z-index: 5; }
+body.kbd .btn.is-focus, body.kbd .linkBtn.is-focus, body.kbd .roombtn.is-focus, body.kbd .tbtn.is-focus, body.kbd .key.is-focus {
+  box-shadow: 0 0 0 calc(var(--u) * 0.35) #fff, 0 0 0 calc(var(--u) * 0.85) var(--focus);
+  -webkit-transform: scale(1.06); transform: scale(1.06);
+}
+/* 記録をリセット: 地は背景色のまま、ピンクの枠を文字のすぐ外に */
+body.kbd .linkBtn.is-focus { color: var(--ink); background: transparent; box-shadow: 0 0 0 calc(var(--u) * 0.35) var(--focus); }
+
+/* ---------- ゲーム画面 ---------- */
+#roomArea {
+  position: absolute; left: calc(var(--u) * 16.25); top: calc(var(--u) * 0.8);
+  width: calc(var(--u) * 67.5); height: calc(var(--u) * 42.2);
+  border-radius: calc(var(--u) * 1.2); overflow: hidden; background: #EDEBE4;
+}
+.roomView { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: none; }
+.roomView.on { display: block; }
+.roomView > img.scene { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: block; }
+#roomName {
+  position: absolute; left: calc(var(--u) * 1.2); top: calc(var(--u) * 2.4); z-index: 3;
+  background: rgba(255, 255, 255, 0.92); font-weight: 700; font-size: calc(var(--u) * 2);
+  padding: calc(var(--u) * 0.3) calc(var(--u) * 1.4); border-radius: calc(var(--u) * 2);
+}
+.ov { position: absolute; pointer-events: none; opacity: 0; -webkit-transition: opacity 1.2s; transition: opacity 1.2s; }
+.ov.on { opacity: 1; }
+.ov.fog { background: rgba(255, 255, 255, 0.82); border-radius: calc(var(--u) * 0.3); }
+.ov.dirt {
+  border-radius: calc(var(--u) * 0.2);
+  background: radial-gradient(ellipse at 30% 35%, rgba(150, 120, 85, 0.55), rgba(150, 120, 85, 0) 45%),
+    radial-gradient(ellipse at 70% 60%, rgba(140, 112, 80, 0.5), rgba(140, 112, 80, 0) 45%),
+    radial-gradient(ellipse at 55% 25%, rgba(160, 130, 95, 0.45), rgba(160, 130, 95, 0) 35%),
+    rgba(185, 165, 130, 0.38);
+}
+
+/* 調べる場所: 押せる範囲は大きく(5u)、見た目の丸は小さめ */
+.hs {
+  position: absolute; width: calc(var(--u) * 5.2); height: calc(var(--u) * 5.2);
+  margin-left: calc(var(--u) * -2.6); margin-top: calc(var(--u) * -2.6);
+  background: none; border: none; padding: 0; cursor: pointer; z-index: 2;
+}
+.hs .ring {
+  position: absolute; left: 50%; top: 50%; width: calc(var(--u) * 3.2); height: calc(var(--u) * 3.2);
+  margin-left: calc(var(--u) * -1.6); margin-top: calc(var(--u) * -1.6); border-radius: 50%;
+  border: calc(var(--u) * 0.4) solid #fff; background: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 0 calc(var(--u) * 0.15) rgba(31, 42, 68, 0.65);
+  -webkit-transition: -webkit-transform 0.12s; transition: transform 0.12s;
+}
+.hs .spark {
+  position: absolute; left: 50%; top: 50%; width: calc(var(--u) * 3.4); height: calc(var(--u) * 3.4);
+  margin-left: calc(var(--u) * -1.7); margin-top: calc(var(--u) * -1.7); border-radius: 50%;
+  -webkit-transition: -webkit-transform 0.12s; transition: transform 0.12s;
+}
+.hs .spark img { display: block; width: 100%; height: 100%; }
+.hs.got .spark { opacity: 0.4; }
+.hs .lbl {
+  position: absolute; left: 50%; top: 88%; -webkit-transform: translateX(-50%); transform: translateX(-50%);
+  white-space: nowrap; font-size: calc(var(--u) * 1.45); font-weight: 700; line-height: 1.25;
+  background: rgba(255, 255, 255, 0.94); color: var(--ink);
+  padding: calc(var(--u) * 0.15) calc(var(--u) * 0.8); border-radius: calc(var(--u) * 1.4);
+}
+.hs.lbl-above .lbl { top: auto; bottom: 88%; }
+.hs.is-focus { z-index: 4; }
+.hs.is-focus .ring {
+  border-color: var(--focus); background: rgba(255, 79, 152, 0.25);
+  box-shadow: 0 0 0 calc(var(--u) * 0.3) #fff;
+  -webkit-transform: scale(1.3); transform: scale(1.3);
+}
+.hs.is-focus .spark {
+  /* 星は目立たせすぎないよう、選んでも拡大しない(枠だけ出す) */
+  background: rgba(255, 255, 255, 0.55); box-shadow: 0 0 0 calc(var(--u) * 0.45) var(--focus), 0 0 0 calc(var(--u) * 0.75) #fff;
+}
+.hs.is-focus .lbl { background: var(--focus); color: #fff; }
+/* 隠し場所: 条件を満たすまでは存在しない。満たした後も、選んだときだけ〇が見える */
+.hs.secret.locked { display: none; }
+.hs.dim { display: none; }
+.btn.hide { display: none; }   /* 暗くて見えない星 */
+.hs.secret .ring { opacity: 0; }
+.hs.secret.is-focus .ring { opacity: 1; }
+
+/* 前後の部屋(タッチ・マウス用。キー操作では部屋の端で左右を押す) */
+.arrow {
+  position: absolute; top: calc(var(--u) * 18.4); width: calc(var(--u) * 6); height: calc(var(--u) * 6);
+  border-radius: 50%; border: none; background: rgba(31, 42, 68, 0.82); cursor: pointer; padding: 0;
+}
+.arrow.left { left: calc(var(--u) * 7.5); }
+.arrow.right { left: calc(var(--u) * 86.5); }
+.arrow i { position: absolute; left: 50%; top: 50%; width: 0; height: 0; border-style: solid; }
+.arrow.left i { margin: calc(var(--u) * -1.2) 0 0 calc(var(--u) * -1); border-width: calc(var(--u) * 1.2) calc(var(--u) * 1.8) calc(var(--u) * 1.2) 0; border-color: transparent #fff transparent transparent; }
+.arrow.right i { margin: calc(var(--u) * -1.2) 0 0 calc(var(--u) * -0.7); border-width: calc(var(--u) * 1.2) 0 calc(var(--u) * 1.2) calc(var(--u) * 1.8); border-color: transparent transparent transparent #fff; }
+
+/* ---------- 下のバー(外周5%の内側: x 5〜95u、y 〜53.4u) ---------- */
+#bar {
+  position: absolute; left: calc(var(--u) * 5); top: calc(var(--u) * 43.6);
+  width: calc(var(--u) * 90); height: calc(var(--u) * 9.8);
+  display: flex; justify-content: space-between; align-items: flex-start;
+}
+.group { display: flex; flex-direction: column; }
+.group > b { font-size: calc(var(--u) * 1.35); color: var(--muted); height: calc(var(--u) * 1.8); line-height: calc(var(--u) * 1.6); white-space: nowrap; }
+.grid2 { display: flex; flex-wrap: wrap; }
+
+.rooms { width: calc(var(--u) * 19.2); display: flex; flex-wrap: wrap; justify-content: space-between; align-content: space-between; height: calc(var(--u) * 9.6); }
+.roombtn {
+  width: calc(var(--u) * 9.4); height: calc(var(--u) * 4.5); border: none; border-radius: calc(var(--u) * 0.7);
+  background: var(--room); color: var(--ink); font-weight: 700; font-size: calc(var(--u) * 1.6); cursor: pointer; padding: 0; white-space: nowrap;
+}
+.roombtn.cur { background: var(--ink); color: #fff; }
+
+.slots { width: calc(var(--u) * 8.4); }
+.slot {
+  width: calc(var(--u) * 3.8); height: calc(var(--u) * 3.8); margin: 0 calc(var(--u) * 0.4) calc(var(--u) * 0.4) 0;
+  border: 1px dashed var(--line); border-radius: calc(var(--u) * 0.6); background: rgba(255, 255, 255, 0.5);
+  display: flex; align-items: center; justify-content: center;
+}
+.slot.full { border: 1px solid var(--ink); background: #fff; }
+.slot img { width: 82%; height: 82%; display: block; }
+
+.nums { width: calc(var(--u) * 16); }
+.badge {
+  display: inline-block; color: #fff; font-weight: 700; border-radius: calc(var(--u) * 0.6);
+  padding: calc(var(--u) * 0.15) calc(var(--u) * 0.6); white-space: nowrap; line-height: 1.3;
+}
+.nums .badge {
+  width: calc(var(--u) * 7.6); height: calc(var(--u) * 3.8); line-height: calc(var(--u) * 3.8); padding: 0;
+  margin: 0 calc(var(--u) * 0.4) calc(var(--u) * 0.4) 0; text-align: center; font-size: calc(var(--u) * 1.55);
+}
+.badge.unk { opacity: 0.4; }
+
+.orderBox { width: calc(var(--u) * 10.4); }
+.orderBox.hide .dots { visibility: hidden; }
+.dots { display: flex; align-items: center; height: calc(var(--u) * 3.8); }
+.dot { width: calc(var(--u) * 2.2); height: calc(var(--u) * 2.2); border-radius: 50%; margin-right: calc(var(--u) * 0.4); border: 1px solid rgba(0, 0, 0, 0.25); }
+
+.stats { width: calc(var(--u) * 9); height: calc(var(--u) * 9.6); display: flex; flex-direction: column; justify-content: space-around; }
+.stat { display: flex; align-items: center; font-size: calc(var(--u) * 1.9); font-weight: 700; white-space: nowrap; }
+.stat img { width: calc(var(--u) * 2.4); height: calc(var(--u) * 2.4); margin-right: calc(var(--u) * 0.6); }
+
+.tools { width: calc(var(--u) * 12.4); height: calc(var(--u) * 9.6); display: flex; flex-wrap: wrap; justify-content: space-between; align-content: space-between; }
+.tbtn {
+  height: calc(var(--u) * 4.5); border-radius: calc(var(--u) * 2.4); cursor: pointer; font-weight: 700;
+  font-size: calc(var(--u) * 1.7); display: flex; align-items: center; justify-content: center; padding: 0 calc(var(--u) * 0.8); white-space: nowrap;
+}
+.tbtn img { width: calc(var(--u) * 2.4); height: calc(var(--u) * 2.4); }
+.tbtn.wide { width: 100%; background: var(--ink); color: #fff; border: none; }
+.tbtn.wide img { margin-right: calc(var(--u) * 0.6); }
+.tbtn.icon { width: calc(var(--u) * 4.5); background: #fff; border: calc(var(--u) * 0.25) solid var(--ink); padding: 0; }
+.tbtn.quit { width: calc(var(--u) * 7.4); background: #fff; border: calc(var(--u) * 0.25) solid var(--ink); color: var(--ink); }
+
+/* ---------- ダイアログ(ステージの中に重ねる) ---------- */
+.overlay {
+  position: absolute; left: 0; top: 0; width: 100%; height: 100%; z-index: 20;
+  background: rgba(15, 20, 35, 0.55); display: none; align-items: center; justify-content: center;
+}
+.overlay.on { display: flex; }
+.box {
+  background: var(--panel); color: var(--ink); border: calc(var(--u) * 0.35) solid var(--ink);
+  border-radius: calc(var(--u) * 2); padding: calc(var(--u) * 2.4) calc(var(--u) * 3);
+  width: calc(var(--u) * 66); max-height: calc(var(--u) * 49); font-size: calc(var(--u) * 2.05); line-height: 1.6;
+}
+.box p { margin: 0 0 calc(var(--u) * 1.4); }
+.box .note { font-size: calc(var(--u) * 1.6); color: var(--muted); }
+.actions { display: flex; justify-content: flex-end; }
+.actions .btn + .btn { margin-left: calc(var(--u) * 1.8); }
+.ico { height: 1.4em; width: auto; vertical-align: -0.35em; margin: 0 0.1em; }
+
+/* 光で壁に映し出されたメッセージ */
+.letterOv { background: transparent; }
+.projection {
+  position: absolute; left: calc(var(--u) * 16.25); top: calc(var(--u) * 0.8); width: calc(var(--u) * 67.5); height: calc(var(--u) * 42.2);
+  border-radius: calc(var(--u) * 1.2); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+  background: radial-gradient(ellipse at 50% 42%, rgba(92, 68, 26, 0.9), rgba(28, 20, 8, 0.95) 78%);
+  box-shadow: inset 0 0 calc(var(--u) * 6) rgba(255, 210, 110, 0.35);
+  color: #FFF4D2; padding: calc(var(--u) * 2) calc(var(--u) * 5);
+  -webkit-animation: lightup 1.2s ease-out; animation: lightup 1.2s ease-out;
+}
+.letterBody { font-weight: 700; font-size: calc(var(--u) * 2.2); line-height: 1.9; margin: 0 0 calc(var(--u) * 2); text-shadow: 0 0 calc(var(--u) * 0.6) rgba(255, 200, 80, 0.9); }
+.projection .actions { justify-content: center; }
+.projection .btn { font-size: calc(var(--u) * 2); }
+@-webkit-keyframes lightup { from { opacity: 0; } to { opacity: 1; } }
+@keyframes lightup { from { opacity: 0; } to { opacity: 1; } }
+/* 窓辺のシェード(下ろすとシェードを下ろした絵に切り替わり、部屋が少し暗くなる) */
+.ov.shade { -webkit-transition: opacity 0.6s; transition: opacity 0.6s; }
+.ov.dark { left: 0; top: 0; width: 100%; height: 100%; background: rgba(20, 24, 40, 0.38); }
+.ov.glow { left: 0; top: 0; width: 100%; height: 100%; background: radial-gradient(ellipse at 76% 40%, rgba(255, 222, 130, 0.5), rgba(255, 222, 130, 0.15) 28%, rgba(255, 222, 130, 0) 52%); }
+
+/* 宝箱のダイヤル */
+#padBox { width: calc(var(--u) * 54); padding: calc(var(--u) * 2) calc(var(--u) * 3); }
+.padTitle { display: flex; align-items: center; justify-content: center; font-weight: 700; margin-bottom: calc(var(--u) * 1); }
+.padTitle img { height: calc(var(--u) * 3.4); width: auto; margin-right: calc(var(--u) * 1); }
+.code { display: flex; justify-content: center; }
+.code span {
+  width: calc(var(--u) * 5); height: calc(var(--u) * 5.6); margin: 0 calc(var(--u) * 0.6);
+  border: calc(var(--u) * 0.3) solid var(--ink); border-radius: calc(var(--u) * 1);
+  display: flex; align-items: center; justify-content: center; font-size: calc(var(--u) * 3.2); font-weight: 700;
+}
+.padErr { text-align: center; color: #C0392B; font-weight: 700; font-size: calc(var(--u) * 1.7); height: calc(var(--u) * 2.8); line-height: calc(var(--u) * 2.8); }
+.pad { display: flex; flex-wrap: wrap; justify-content: space-between; }
+.key {
+  width: 32%; height: calc(var(--u) * 4.6); margin-bottom: calc(var(--u) * 0.7); cursor: pointer;
+  border: calc(var(--u) * 0.25) solid var(--ink); border-radius: calc(var(--u) * 1); background: var(--bg);
+  font-weight: 700; font-size: calc(var(--u) * 2.2);
+}
+#padBox .actions { margin-top: calc(var(--u) * 0.6); }
+.shake { -webkit-animation: shake 0.4s; animation: shake 0.4s; }
+@-webkit-keyframes shake { 25% { -webkit-transform: translateX(calc(var(--u) * -1)); } 75% { -webkit-transform: translateX(calc(var(--u) * 1)); } }
+@keyframes shake { 25% { transform: translateX(calc(var(--u) * -1)); } 75% { transform: translateX(calc(var(--u) * 1)); } }
+
+/* クリア画面 */
+#winBox { width: calc(var(--u) * 86); display: flex; align-items: center; padding: calc(var(--u) * 2.4) calc(var(--u) * 3); }
+.winMain { width: 54%; text-align: center; padding-right: calc(var(--u) * 2.4); }
+.winSide { width: 46%; text-align: center; border-left: 1px dashed var(--line); padding-left: calc(var(--u) * 2.4); }
+.trophy { position: relative; width: calc(var(--u) * 11); height: calc(var(--u) * 11); margin: 0 auto calc(var(--u) * 0.6); }
+.trophy img { position: relative; display: block; width: 100%; height: 100%; }
+.halo {
+  position: absolute; left: -30%; top: -30%; width: 160%; height: 160%; border-radius: 50%; opacity: 0;
+  background: radial-gradient(circle, rgba(255, 214, 60, 0.75), rgba(255, 214, 60, 0) 65%);
+  will-change: opacity;
+}
+.trophy.legend .halo { -webkit-animation: halo 1.6s ease-in-out infinite alternate; animation: halo 1.6s ease-in-out infinite alternate; }
+@-webkit-keyframes halo { from { opacity: 0.25; } to { opacity: 0.9; } }
+@keyframes halo { from { opacity: 0.25; } to { opacity: 0.9; } }
+.tname { font-weight: 700; font-size: calc(var(--u) * 2.5); margin: 0 0 calc(var(--u) * 0.4); line-height: 1.3; }
+.newtag { display: inline-block; background: #E8A900; color: var(--ink); border-radius: calc(var(--u) * 1); padding: 0 calc(var(--u) * 0.8); font-size: calc(var(--u) * 1.5); margin-left: calc(var(--u) * 0.6); vertical-align: middle; }
+.wsmall { font-size: calc(var(--u) * 1.6); color: var(--muted); margin: 0 0 calc(var(--u) * 0.8); line-height: 1.45; }
+.results { display: flex; justify-content: center; font-weight: 700; font-size: calc(var(--u) * 1.9); margin-bottom: calc(var(--u) * 0.8); }
+.results span + span { margin-left: calc(var(--u) * 2); }
+.winMain .actions { justify-content: center; margin-top: calc(var(--u) * 1); }
+.winMain .btn { font-size: calc(var(--u) * 2); padding: calc(var(--u) * 0.8) calc(var(--u) * 2.2); }
+.zukan { display: flex; justify-content: center; }
+.zcol { display: flex; flex-direction: column; align-items: center; margin: 0 calc(var(--u) * 0.45); }
+.zcol b { display: flex; align-items: center; font-size: calc(var(--u) * 1.35); color: var(--muted); height: calc(var(--u) * 2.4); white-space: nowrap; }
+.zcol b img { width: calc(var(--u) * 1.6); height: calc(var(--u) * 1.6); margin-right: calc(var(--u) * 0.2); }
+.zslot {
+  width: calc(var(--u) * 5); height: calc(var(--u) * 5); margin-top: calc(var(--u) * 0.6);
+  border: 1px solid var(--line); border-radius: calc(var(--u) * 0.8); background: var(--bg);
+  display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--muted); font-size: calc(var(--u) * 1.8);
+}
+.ownerBadge { display: flex; justify-content: center; margin-top: calc(var(--u) * 1.6); }
+.ownerBadge.hide { display: none; }
+.ownerBadge .obJa { display: none; width: calc(var(--u) * 36); height: auto; }
+.ownerBadge .obEn {
+  display: flex; align-items: center; justify-content: center;
+  width: calc(var(--u) * 36); box-sizing: border-box; white-space: nowrap;
+  padding: calc(var(--u) * 0.5) calc(var(--u) * 1); border-radius: calc(var(--u) * 1.2);
+  background: #FFFFFF; border: 1px solid #cfebb4; font-weight: 700; font-size: calc(var(--u) * 1.4); color: #42210b;
+}
+.ownerBadge .obEn img { width: calc(var(--u) * 3.2); height: auto; margin-right: calc(var(--u) * 1); }
+html[lang="ja"] .ownerBadge .obJa { display: block; }
+html[lang="ja"] .ownerBadge .obEn { display: none; }
+.zslot.now { border: calc(var(--u) * 0.3) solid #E8A900; }
+.zslot img { width: 80%; height: 80%; display: block; }

@@ -1,0 +1,143 @@
+おうちの宝さがし / Treasure Hunt at Home — 素材とライブラリの一覧
+====================================================================
+
+■ ライブラリ
+  なし(外部ライブラリ・ゲームエンジンは使っていません)
+
+■ 書体
+  Zen Maru Gothic(Medium / Bold)Version 1.001
+    ファイル: fonts/zenmaru-500.woff, fonts/zenmaru-700.woff
+    (ゲームで使う文字だけに絞ったサブセット。著作権表示とライセンス情報は書体の中にも残しています)
+    著作権: Copyright 2021 The Zen Maru Gothic Project Authors
+    ライセンス: SIL Open Font License, Version 1.1(全文はこのファイルの末尾)
+    入手元: Google Fonts(https://fonts.google.com/specimen/Zen+Maru+Gothic)
+            元のプロジェクト: https://github.com/googlefonts/zen-marugothic
+  予備の書体: 端末の標準書体("Noto Sans JP", "Noto Sans", "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif)
+
+■ 画像
+  img/rooms/bathroom.jpg, kitchen.jpg, bedroom.jpg, living.jpg, living-shade.jpg(部屋の絵 5枚。living-shade はリビングのシェードを下ろした絵)
+    作成方法: 生成AI(Adobe Photoshop の生成AI機能〈Adobe Firefly〉で生成し、自分で調整)
+    生成AIのサービス名: Adobe Photoshop(Adobe Firefly)
+    商用利用・再配布: 可
+
+  img/ui/house.svg(家の絵)、img/ui/chest.svg(宝箱)
+  img/items/flashlight.svg, stool.svg, cloth.svg, key.svg, bulb.svg(道具。key.svg は宝物の鍵の絵を流用)
+  img/treasures/*.svg(宝物 15個)
+  img/ui/owner-emblem-ja.svg(隠しメッセージ発見のエンブレム。日本語の文字入り)、owner-medal.svg(同じエンブレムから文字部分を外したもの。日本語以外で使用)
+    作成方法: 素材サイトの素材を自分で加工
+    入手元: Adobe Stock(https://stock.adobe.com/jp)
+    ライセンス: Adobe Stock 標準ライセンス
+    使用形態: 限定された視聴者に配信するテレビ向けゲームに組み込んで使用。視聴者が素材を独立したファイルとして取り出せない仕組み
+    商用利用・再配布: 可
+
+  img/ui/sparkle.svg, sound-on.svg, sound-off.svg, bulb.svg, clock.svg
+    作成方法: 本ゲーム用に作成(開発時に AI〈Anthropic 社の Claude〉が SVG で作図)
+    商用利用・再配布: 可
+
+  img/ui/title-ja.svg, title-en.svg(タイトルの文字)
+    作成方法: Zen Maru Gothic Black(SIL OFL 1.1)の文字の形を図形(アウトライン)にしたもの。書体のデータは含まない
+    商用利用・再配布: 可
+
+■ 音
+  audio/bgm.mp3(BGM。カフェ風の落ち着いた4拍子の曲、約3分40秒をくり返し。遊んでいる間だけ控えめな音量で流す)
+    作成方法: 本ゲーム用に作曲・作成(開発時に AI〈Anthropic 社の Claude〉が作曲し、tools/make_bgm_cafe.py で音を合成。外部の音源・既存の曲は使っていない)
+    商用利用・再配布: 可
+  効果音: 音声ファイルなし(ブラウザの Web Audio API で、その場で合成しています)
+
+
+====================================================================
+Zen Maru Gothic のライセンス全文(OFL.txt)
+====================================================================
+Copyright 2021 The Zen Maru Gothic Project Authors (https://github.com/googlefonts/zen-marugothic)
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license is copied below, and is also available with a FAQ at:
+https://openfontlicense.org
+
+
+-----------------------------------------------------------
+SIL OPEN FONT LICENSE Version 1.1 - 26 February 2007
+-----------------------------------------------------------
+
+PREAMBLE
+The goals of the Open Font License (OFL) are to stimulate worldwide
+development of collaborative font projects, to support the font creation
+efforts of academic and linguistic communities, and to provide a free and
+open framework in which fonts may be shared and improved in partnership
+with others.
+
+The OFL allows the licensed fonts to be used, studied, modified and
+redistributed freely as long as they are not sold by themselves. The
+fonts, including any derivative works, can be bundled, embedded, 
+redistributed and/or sold with any software provided that any reserved
+names are not used by derivative works. The fonts and derivatives,
+however, cannot be released under any other type of license. The
+requirement for fonts to remain under this license does not apply
+to any document created using the fonts or their derivatives.
+
+DEFINITIONS
+"Font Software" refers to the set of files released by the Copyright
+Holder(s) under this license and clearly marked as such. This may
+include source files, build scripts and documentation.
+
+"Reserved Font Name" refers to any names specified as such after the
+copyright statement(s).
+
+"Original Version" refers to the collection of Font Software components as
+distributed by the Copyright Holder(s).
+
+"Modified Version" refers to any derivative made by adding to, deleting,
+or substituting -- in part or in whole -- any of the components of the
+Original Version, by changing formats or by porting the Font Software to a
+new environment.
+
+"Author" refers to any designer, engineer, programmer, technical
+writer or other person who contributed to the Font Software.
+
+PERMISSION & CONDITIONS
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of the Font Software, to use, study, copy, merge, embed, modify,
+redistribute, and sell modified and unmodified copies of the Font
+Software, subject to the following conditions:
+
+1) Neither the Font Software nor any of its individual components,
+in Original or Modified Versions, may be sold by itself.
+
+2) Original or Modified Versions of the Font Software may be bundled,
+redistributed and/or sold with any software, provided that each copy
+contains the above copyright notice and this license. These can be
+included either as stand-alone text files, human-readable headers or
+in the appropriate machine-readable metadata fields within text or
+binary files as long as those fields can be easily viewed by the user.
+
+3) No Modified Version of the Font Software may use the Reserved Font
+Name(s) unless explicit written permission is granted by the corresponding
+Copyright Holder. This restriction only applies to the primary font name as
+presented to the users.
+
+4) The name(s) of the Copyright Holder(s) or the Author(s) of the Font
+Software shall not be used to promote, endorse or advertise any
+Modified Version, except to acknowledge the contribution(s) of the
+Copyright Holder(s) and the Author(s) or with their explicit written
+permission.
+
+5) The Font Software, modified or unmodified, in part or in whole,
+must be distributed entirely under this license, and must not be
+distributed under any other license. The requirement for fonts to
+remain under this license does not apply to any document created
+using the Font Software.
+
+TERMINATION
+This license becomes null and void if any of the above conditions are
+not met.
+
+DISCLAIMER
+THE FONT SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT
+OF COPYRIGHT, PATENT, TRADEMARK, OR OTHER RIGHT. IN NO EVENT SHALL THE
+COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+INCLUDING ANY GENERAL, SPECIAL, INDIRECT, INCIDENTAL, OR CONSEQUENTIAL
+DAMAGES, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM
+OTHER DEALINGS IN THE FONT SOFTWARE.
