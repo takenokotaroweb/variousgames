@@ -1,7 +1,7 @@
-/* 宇宙パトロール — ゲーム本体(ver06: インベーダー型のシューティング。BGM あり)
+/* 宇宙パトロール — ゲーム本体(ver07: インベーダー型のシューティング。BGM あり)
  * 遊び方: 自分の船を左右に動かし、光線で宇宙人を星に変える。宇宙人の群れは左右に動きながら少しずつ下りてくる。
  *         群れを全部星に変えると次の波へ。宇宙人の弾に当たると船が1つ減る。宇宙人が地上に着くか、船が無くなるとゲームオーバー。
- * 操作: 左右キー=移動、決定か上キー=撃つ(押しっぱなしで連射)、下キー=BGM のオン・オフ、戻る=一時停止。タッチは画面をタップした所へ移動して撃つ。
+ * 操作: 左右キー=移動、決定か上キー=撃つ(押しっぱなしで連射)、下キー=BGM のオン・オフ、戻る=一時停止。タッチ・マウスは画面のタップ・クリックで撃つ(船は動かない)、下の ◀ ▶ ボタンで移動。
  * 構文は ES2019 相当まで（?. ?? は使わない）。文言は i18n.js の t() から引く。
  * 戻るキーは「実際に処理したときだけ」preventDefault する（TV_WEBGAME_DEV_GUIDE 3章）。
  */
@@ -377,7 +377,7 @@
     if (n - h.start <= TAP_MOVE_MS) return 'on';
     return (n - h.start > REPEAT_WAIT_MS) ? 'off' : 'wait';
   }
-  // タッチ: 押している ◀ ▶、撃つボタン、タップした場所
+  // タッチ: 押している ◀ ▶、撃つボタン、◀ ▶ を1回押したときの行き先(tgt)
   var ptr = { dir: 0, fire: false, fireStart: 0, tgt: null };
   function stopHolds() {
     mv.dir = null; fireHold.on = false; ptr.dir = 0; ptr.fire = false; ptr.tgt = null;
@@ -883,16 +883,13 @@
       if (up) { el.addEventListener('touchend', up); el.addEventListener('touchcancel', up); el.addEventListener('mouseup', up); el.addEventListener('mouseleave', up); }
     }
   }
-  function worldX(clientX) {
-    var r = $('stage').getBoundingClientRect();
-    return r.width ? (clientX - r.left) / r.width * W : G.player.x;
-  }
-  // 遊ぶ場所をタップ → その場所へ動いて1発撃つ
+  // 遊ぶ場所をタップ・クリック → 1発撃つだけ(船は動かさない)
+  // ver06 までは、タップした所へ船が動いた。PC で画面をクリックしたときや、iPad で ◀ ▶ 撃つ を
+  // 少し外して押したときに、船が勝手に動いたように見えたのでやめた。船を動かすのは左右キーと ◀ ▶ ボタンだけ
   onPress($('game'), function (e) {
     if (!playing()) return;
     var tg = e.target;
     if (tg && tg.closest && tg.closest('button')) return;
-    ptr.tgt = clamp(worldX(e.clientX), EDGE_L, EDGE_R);
     tryFire(true);
   });
   function padDir(id, d) {
