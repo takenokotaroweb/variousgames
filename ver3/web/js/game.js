@@ -1,4 +1,4 @@
-/* 宇宙パトロール — ゲーム本体(ver09: インベーダー型のシューティング。BGM あり)
+/* 宇宙パトロール — ゲーム本体(ver10: インベーダー型のシューティング。BGM あり)
  * 遊び方: 自分の船を左右に動かし、光線で宇宙人を星に変える。宇宙人の群れは左右に動きながら少しずつ下りてくる。
  *         群れを全部星に変えると次の波へ。宇宙人の弾に当たると船が1つ減る。宇宙人が地上に着くか、船が無くなるとゲームオーバー。
  * 操作: 左右キー=移動、決定か上キー=撃つ(押しっぱなしで連射)、下キー=BGM のオン・オフ、戻る=一時停止。タッチ・マウスは画面のタップ・クリックで撃つ(船は動かない)、下の ◀ ▶ ボタンで移動。
@@ -168,12 +168,12 @@
     } else if (!bgm.paused && !bgmFade) bgmStop();
   }
 
-  /* ===================== ゲームオーバーのジングル(約2秒。tools/make_jingle.py で作ったもの) ===================== */
+  /* ===================== ゲームオーバーのジングル(2秒の曲。tools/make_jingle.py で作ったもの) ===================== */
   // 効果音か BGM のどちらかがオンなら鳴らす(両方オフのときだけ鳴らさない)。BGM と同じ Audio の仕組みで鳴らす
   var JINGLE_VOL = BGM_VOL;   // BGM と同じ音量(曲そのものの大きさも BGM と同じ約 -20 LUFS にしてある)
   var JINGLE_DELAY_MS = 300;  // BGM が小さくなり始めてから鳴らす
   var jingle = null, jinglePrimed = false, jingleTimer = 0;
-  try { jingle = new Audio(); jingle.src = 'audio/gameover.mp3?v=2'; jingle.preload = 'auto'; jingle.volume = JINGLE_VOL; } catch (e) { jingle = null; }
+  try { jingle = new Audio(); jingle.src = 'audio/gameover.mp3?v=3'; jingle.preload = 'auto'; jingle.volume = JINGLE_VOL; } catch (e) { jingle = null; }
   // ボタン操作の中で一度だけ、消音のまま鳴らしてすぐ止めておく
   // (操作の直後でないと音を出せない端末でも、ゲームオーバーのときに鳴らせるように)
   function jinglePrime() {
