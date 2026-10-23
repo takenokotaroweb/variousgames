@@ -23,4 +23,5 @@
 - 題材は「宇宙人を光線で星に変える」(倒す・爆発の表現にしない)[CNT-2]。宇宙人の絵は本ゲーム用に描いたもの。既存のゲームの絵・名前・音に似せない [CNT-8, TXT-5]。
 - BGM(`web/audio/bgm.mp3`)は遊んでいる間だけ鳴らす。鳴らす・止めるは `bgmSync()` / `bgmStop()` / `bgmFadeOut()` に集め、一時停止・非表示・タイトル・音楽オフでは必ず止まること。鳴らし始め(`bgm.play()`)は利用者の操作の中で呼ぶ。曲を替えたら `audio/bgm.mp3?v=` を上げる。
 - ゲームオーバーのジングル(`web/audio/gameover.mp3`)は `playGameOverJingle()` で鳴らし、`jingleStop()` で止める。効果音か BGM のどちらかがオンなら鳴らす。「はじめる」などの操作の中で `jinglePrime()` を呼んで、操作の後でないと音を出せない端末でも鳴るようにしている。曲を替えたら `audio/gameover.mp3?v=` を上げる。
+- アイコン(`icons/icon.ja.png` / `icon.en.png`)は ver12 で差し替えた画像(元は `icons/original/`)。`tools/make_icon.py` で上書きしないこと(古い絵に戻ってしまう)。
 - 保存キーは `vendor.spacepatrol.settings.v1`(速さ・自動で撃つ・効果音・音楽)と `vendor.spacepatrol.best.v1`(速さごとの最高得点)。頭の `vendor.spacepatrol` は GML と決めた識別名・ゲームIDに差し替える(`game.js` 冒頭の `SAVE_PREFIX`)。
