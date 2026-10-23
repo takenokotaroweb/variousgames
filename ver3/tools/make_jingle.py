@@ -1,11 +1,12 @@
 """ゲームオーバーのジングルを合成する(web/ の外に置く道具)。外部の音源・サンプル・既存の曲は使っていない。
 
-曲: 本ゲーム用に、2秒の長さで作曲した短い曲(ver10)。BGM と同じイ短調・ピコピコした音色。
+曲: 本ゲーム用に、2秒の長さで作曲した短い曲(ver10、ver11 で終わり方を直した)。BGM と同じイ短調・ピコピコした音色。
     120BPM の4拍(ちょうど2秒)。
       1拍目   「ミ・ド・ラ」と和音(Am)を駆け下りる
       2拍目   「レ・シ・ソ♯」と和音(E)を駆け下りる(1拍目への返事)
-      3〜4拍目 低い「ラ」の和音を鳴らし、音程を少し下げながら消えていく。
-               上に「電源が切れていく」ような下がる音を重ねて、ゲームオーバーと分かる形にする
+      3〜4拍目 低い「ラ」の和音を、音程を変えずにまっすぐ鳴らして、自然に消えて終わる。
+               和音の頭に「電源が切れていく」ような下がる音を短く重ねて、ゲームオーバーと分かる形にする
+    (ver10 は最後の和音の音程を下げていたため、音どうしがうなってビブラートのように聞こえた。ver11 でやめた)
 
 使い方(リポジトリのルートで。numpy と ffmpeg が必要):
     python tools/make_jingle.py web/audio
@@ -60,10 +61,10 @@ def env(n, a=0.004, d=0.06, s=0.6, r=0.03):
     e[-ir:] *= np.linspace(1, 0, ir)
     return e
 rng = np.random.RandomState(11)
-def kick():
+def kick(base=45.0, decay=9.0):
     d = 0.3; n = int(SR * d); t = np.arange(n) / SR
-    f = 45 + 120 * np.exp(-t * 24)
-    return np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-t * 9)
+    f = base + 120 * np.exp(-t * 24)
+    return np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-t * decay)
 def snare(d=0.1):
     n = int(SR * d); t = np.arange(n) / SR
     nz = rng.uniform(-1, 1, n); nz = nz - np.concatenate([[0], nz[:-1]]) * 0.6
@@ -89,38 +90,42 @@ for (bt, nm, ln) in MEL:
     s = pulse(hz(midi(nm)), d, 0.5) * env(int(SR * d), d=0.05, s=0.65)
     add(bt, s, 0.30, -0.1)
     add(bt + 0.03, pulse(hz(midi(nm)) * 1.004, d, 0.25) * env(int(SR * d), d=0.05, s=0.55), 0.12, 0.35)
-# 3〜4拍目: 低いラ(と1オクターブ上のラ)を長くのばし、半音の3分の2ほど下げながら消えていく
+# 3〜4拍目: 低いラ(と1オクターブ上のラ)を、音程を変えずにのばし、だんだん小さくして消える
+# (音程を下げると、音どうしがうなってビブラートのように聞こえるので下げない)
+def fade_out(n, hold=0.25):
+    e = np.ones(n); h = int(n * hold)
+    e[h:] = np.linspace(1, 0, n - h) ** 2          # のばした後、なめらかに小さくする
+    e[:int(SR * 0.004)] = np.linspace(0, 1, int(SR * 0.004))
+    return e
 for nm, g, pan in [('A4', 0.26, -0.1), ('A3', 0.20, 0.2)]:
     d = 2 * BEAT
-    s = pulse(hz(midi(nm)), d, 0.5, drop=-0.7) * env(int(SR * d), d=0.12, s=0.6, r=0.55)
+    s = pulse(hz(midi(nm)), d, 0.5) * fade_out(int(SR * d))
     add(2, s, g, pan)
-# 「電源が切れていく」下がる音(高い所から低い所へ)
-add(2.1, sweep(1400, 160, 0.75) * env(int(SR * 0.75), a=0.01, d=0.05, s=0.8, r=0.1), 0.07, 0.3)
+# 「電源が切れていく」下がる音(高い所から低い所へ)。和音の頭に短く重ねて、終わりは和音だけにする
+add(2.05, sweep(1400, 200, 0.5) * env(int(SR * 0.5), a=0.01, d=0.05, s=0.8, r=0.15), 0.07, 0.3)
 
 # ---------------- 伴奏の和音(細い矩形波): Am → E → Am ----------------
 for (bt, chord, ln) in [(0, ['A4', 'C5', 'E5'], 1), (1, ['E4', 'G#4', 'B4'], 1), (2, ['A3', 'C4', 'E4'], 2)]:
     for nm in chord:
         d = ln * BEAT
-        drop = -0.7 if ln == 2 else 0.0
-        s = pulse(hz(midi(nm)), d, 0.125, drop=drop) * env(int(SR * d), d=0.12, s=0.4, r=0.5 if ln == 2 else 0.04)
+        s = pulse(hz(midi(nm)), d, 0.125) * (fade_out(int(SR * d)) * 0.5 if ln == 2 else env(int(SR * d), d=0.12, s=0.4, r=0.04))
         add(bt, s, 0.05, 0.4)
 
 # ---------------- ベース ----------------
 for (bt, nm, ln) in [(0, 'A2', 0.5), (0.5, 'A2', 0.5), (1, 'E2', 0.5), (1.5, 'E2', 0.5), (2, 'A1', 2)]:
-    d = ln * BEAT * 0.92
-    drop = -0.7 if ln == 2 else 0.0
-    s = (tri(hz(midi(nm)), d, drop) * 0.8 + pulse(hz(midi(nm)), d, 0.25, drop) * 0.25) * env(int(SR * d), d=0.08, s=0.6, r=0.55 if ln == 2 else 0.03)
+    d = ln * BEAT * (1.0 if ln == 2 else 0.92)
+    s = (tri(hz(midi(nm)), d) * 0.8 + pulse(hz(midi(nm)), d, 0.25) * 0.25) * (fade_out(int(SR * d)) if ln == 2 else env(int(SR * d), d=0.08, s=0.6, r=0.03))
     add(bt, s, 0.30)
 
 # ---------------- ドラム ----------------
 add(0, kick(), 0.5); add(1, kick(), 0.5)
 for k in range(3):                          # 2拍目の後半に小さなスネアの連打(だんだん大きく)
     add(1.25 + k * 0.25, snare(), 0.10 + k * 0.05)
-add(2, kick(), 0.7)
+add(2, kick(base=55.0, decay=16.0), 0.7)   # 最後のキックは低いラ(55Hz)にそろえ、短く切る(ベースとうなってゆれないように)
 add(2, cymbal(), 0.45)
 
 out = buf[:TOTAL]
-fade = int(SR * 0.15); out[-fade:] *= np.linspace(1, 0, fade)[:, None]
+fade = int(SR * 0.03); out[-fade:] *= np.linspace(1, 0, fade)[:, None]   # 最後の切れ目でプツッと鳴らないように
 out = out / np.max(np.abs(out)) * 0.6
 
 os.makedirs(OUT, exist_ok=True)
