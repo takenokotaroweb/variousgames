@@ -129,7 +129,12 @@
   - `icon.en.png` は 330x330 で受け取った画像を、縮小も保存し直しもせずにそのまま使っている(大きな元画像は無い)。
   - 縮小は Pillow の LANCZOS(なめらかに縮める方法)で、切り取りや色の変更はしていない。
   - 絵: 夜空に3種類の宇宙人と、自分の船から出た光線の先で宇宙人が星に変わったところ。下の帯にゲーム名。
-  - 作成方法(生成AIを使った場合はサービス名)は、GML への申告のために記入が必要 [CNT-7]: (未記入)
+  - 作成方法 [CNT-7](3つのアイコン `icon.ja.png` / `icon.en.png` / `icon-base.png` に共通):
+    1. もとの絵: ver11 まで使っていたアイコン。開発時に AI〈Anthropic 社の Claude〉が `tools/make_icon.py` で作図したもの
+    2. 生成AI〈OpenAI 社の ChatGPT〉で、もとの絵をブラッシュアップ
+    3. 制作者が Adobe Photoshop で手作業で微調整
+    4. `icon.ja.png` と `icon-base.png` は、1254x1254 の画像を開発時に 330x330 に縮小(Pillow の LANCZOS)。`icon.en.png` は制作者が 330x330 に仕上げたものをそのまま使用
+  - 生成AIのサービス名: OpenAI ChatGPT(GML への申告用)
 - `icons/icon-base.png`(330x330、文字なしの元絵)。ver12 で、新しいアイコンの文字なし版に差し替えた。元の大きさ(1254x1254)の画像は `icons/original/icon-base.original.png`。縮小の方法は上と同じ。
 - `tools/make_icon.py` は ver11 までの古いアイコンを作る道具。今のアイコンはこの道具では作っていない。
 
