@@ -2,7 +2,7 @@
 
 - ver12: アイコンを差し替えた(`web/` は ver11 と同じなので、ゲームの確認結果は ver11 のまま)。
   - [x] `icons/icon.ja.png` / `icon.en.png` が 330x330 の PNG。330x330 の実寸でゲーム名の文字が読める
-  - [ ] `icons/icon-base.png`(文字なしの元絵)を新しい絵に差し替える
+  - [x] `icons/icon-base.png`(文字なしの元絵)も新しい絵に差し替えた(330x330 の PNG)
   - [ ] アイコンの作成方法を README に記入する [CNT-7]
 
 
