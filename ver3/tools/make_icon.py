@@ -12,10 +12,11 @@ out, font = sys.argv[1], sys.argv[2]
 NAMES = [('ja', '宇宙パトロール'), ('en', 'Space Patrol')]
 
 # game.js と同じドット絵
-GEM = ['....XX....', '...XXXX...', '..XX..XX..', '.XXXXXXXX.', '..X.XX.X..', '.X......X.']
-EYE = ['..XXXXXX..', '.XX....XX.', 'XX..XX..XX', 'XX..XX..XX', '.XX....XX.', 'X.XXXXXX.X']
-JELLY = ['...XXXX...', '.XXXXXXXX.', 'XX.XXXX.XX', 'XXXXXXXXXX', '.X.X..X.X.', 'X.X....X.X']
-SHIP = ['.....X.....', '....XXX....', '....XXX....', '.XXXXXXXXX.', 'XXXXXXXXXXX', 'XXXXXXXXXXX', 'XX.XXXXX.XX']
+# ver13 で描き直した絵(輪のある星の子・目のある結晶・人工衛星ロボ・ロケット)
+GEM = ['...XXXXX...', '..XXXXXXX..', '..X.XXX.X..', 'XXXXXXXXXXX', '..XXXXXXX..', '...XXXXX...']
+EYE = ['....X....', '...XXX...', '..XXXXX..', '.XX.X.XX.', 'XXXXXXXXX', '.XXXXXXX.', '..XXXXX..', '...XXX...']
+JELLY = ['.....X.....', '...XXXXX...', '...X.X.X...', 'XX.XXXXX.XX', 'XXXXXXXXXXX', 'XX.XXXXX.XX', '....X.X....']
+SHIP = ['....X....', '...XXX...', '...X.X...', '..XXXXX..', '..XXXXX..', '.XXXXXXX.', 'XX.XXX.XX', 'X..X.X..X']
 STAR = ['..X..', '..X..', 'XXXXX', '.XXX.', '.X.X.']
 
 def grad(w, h, a, b):
