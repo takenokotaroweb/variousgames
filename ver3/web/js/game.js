@@ -1,4 +1,4 @@
-/* 宇宙パトロール — ゲーム本体(ver13: インベーダー型のシューティング。BGM あり)
+/* 宇宙パトロール — ゲーム本体(ver14: インベーダー型のシューティング。BGM あり)
  * 遊び方: 自分の船を左右に動かし、光線で宇宙人を星に変える。宇宙人の群れは左右に動きながら少しずつ下りてくる。
  *         群れを全部星に変えると次の波へ。宇宙人の弾に当たると船が1つ減る。宇宙人が地上に着くか、船が無くなるとゲームオーバー。
  * 操作: 左右キー=移動、決定か上キー=撃つ(押しっぱなしで連射)、下キー=BGM のオン・オフ、戻る=一時停止。タッチ・マウスは画面のタップ・クリックで撃つ(船は動かない)、下の ◀ ▶ ボタンで移動。
@@ -210,7 +210,7 @@
   //   eye   (20点・水色) 目のある結晶。まわりに光の粒がまたたく
   //   jelly (10点・桃) 人工衛星ロボ。左右に太陽電池の板、アンテナの灯りが点滅
   //   player       自分の船 = 窓のあるロケット
-  //   ufo          ボーナスの彗星(進む向きに合わせて左右を反転して描く)
+  //   ufo          ボーナスの円盤型の宇宙船(ver14)。透けたガラスのドームに小さな操縦士。縁の灯りと下の噴射が2コマでまたたく
   // キー名(gem / eye / jelly / ufo)はプログラムの中の呼び名で、絵の形とは関係ない
   var SPR = {
     gem: [[
@@ -229,7 +229,11 @@
       '...........', '...XXXXX...', '...X.X.X...', 'XX.XXXXX.XX', 'XXXXXXXXXXX', 'XX.XXXXX.XX', '...X...X...'
     ]],
     player: [['....X....', '...XXX...', '...X.X...', '..XXXXX..', '..XXXXX..', '.XXXXXXX.', 'XX.XXX.XX', 'X..X.X..X']],
-    ufo: [['..........XX..', '.X.....XXXXXX.', '...X..XXXXXXXX', 'XXXXXXXX.XX.XX', '...X..XXXXXXXX', '.X.....XXXXXX.', '..........XX..']],
+    ufo: [[
+      '......XXXX......', '.....X....X.....', '.....X.XX.X.....', '...XXXXXXXXXX...', 'XXXXXXXXXXXXXXXX', '.XXXXXXXXXXXXXX.', '......XXXX......', '.....X....X.....'
+    ], [
+      '......XXXX......', '.....X....X.....', '.....X.XX.X.....', '...XXXXXXXXXX...', '.XXXXXXXXXXXXXX.', '.XXXXXXXXXXXXXX.', '......XXXX......', '....X......X....'
+    ]],
     star: [['..X..', '..X..', 'XXXXX', '.XXX.', '.X.X.']]
   };
   var COL = {
@@ -258,9 +262,9 @@
   }
   IMG.player = makeSprite(SPR.player[0], COL.player, PX);
   IMG.playerHit = makeSprite(SPR.player[0], COL.playerHit, PX);
-  IMG.ufo = makeSprite(SPR.ufo[0], COL.ufo, PX);
-  // 左向きの彗星(右向きの絵を左右反転)
-  IMG.ufoL = makeSprite(SPR.ufo[0].map(function (r) { return r.split('').reverse().join(''); }), COL.ufo, PX);
+  // 円盤は宇宙人より少し小さい点(3px)で描く。上の表示と一番上の宇宙人の間(y 96〜120)に収まるように
+  IMG.ufo = makeSprite(SPR.ufo[0], COL.ufo, 3);      // タイトルの得点表と当たり判定の大きさにも使う
+  IMG.ufo2 = makeSprite(SPR.ufo[1], COL.ufo, 3);     // またたく2コマ目
   IMG.star = makeSprite(SPR.star[0], COL.starFx, PX);
 
   /* ===================== 遊ぶ場所 ===================== */
@@ -532,7 +536,7 @@
     G.ufoTimer -= dt;
     if (!G.ufo && G.ufoTimer <= 0) {
       var dir = Math.random() < 0.5 ? 1 : -1;
-      G.ufo = { x: dir > 0 ? -40 : W + 40, y: 112, dir: dir, pts: [50, 100, 150, 300][Math.floor(Math.random() * 4)], beep: 0 };
+      G.ufo = { x: dir > 0 ? -40 : W + 40, y: 108, dir: dir, pts: [50, 100, 150, 300][Math.floor(Math.random() * 4)], beep: 0 };
       G.ufoTimer = 22 + Math.random() * 10;
     }
     if (G.ufo) {
@@ -563,7 +567,7 @@
       for (var c = 0; c < sd.cells.length; c++) if (sd.cells[c]) ctx.fillRect(sd.x + (c % SCOLS) * SB, sd.y + Math.floor(c / SCOLS) * SB, SB, SB);
     }
     for (i = 0; i < G.aliens.length; i++) { var a = G.aliens[i]; if (a.alive) spr(IMG[a.t.key][G.frame], a.x, a.y); }
-    if (G.ufo) spr(G.ufo.dir > 0 ? IMG.ufo : IMG.ufoL, G.ufo.x, G.ufo.y);   // 彗星は進む向きに頭を向ける
+    if (G.ufo) spr(Math.floor(G.t / 200) % 2 ? IMG.ufo2 : IMG.ufo, G.ufo.x, G.ufo.y);   // 0.2秒ごとに灯りと噴射がまたたく
 
     ctx.fillStyle = COL.shot;
     for (i = 0; i < G.shots.length; i++) ctx.fillRect(Math.round(G.shots[i].x - 2), Math.round(G.shots[i].y - 8), 4, 16);
