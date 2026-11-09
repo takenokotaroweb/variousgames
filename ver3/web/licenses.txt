@@ -15,9 +15,9 @@
   予備の書体: 端末の標準書体("Noto Sans JP", "Noto Sans", "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif)
 
 ■ 画像
-  宇宙人(輪のある星の子・目のある結晶・人工衛星ロボ)・自分の船(ロケット)・円盤型の宇宙船・星・バリアのドット絵(ver13・ver14 で描き直し)
+  宇宙人(輪のある星の子・目のある結晶・人工衛星ロボ)・自分の船(ロケット)・円盤型の宇宙船・星のドット絵(ver13・ver14 で描き直し、ver16 で一部を手直し)、レンガの壁(ver20)、彗星(ver21)
     画像ファイルは無く、js/game.js の中の点の並び(文字の配列)から、その場で描いています
-    作成方法: 本ゲーム用に作成(開発時に AI〈Anthropic 社の Claude〉が作図)。既存のゲームの絵は使っていません
+    作成方法: 本ゲーム用に作成(開発時に AI〈Anthropic 社の Claude〉が作図し、輪のある星の子・円盤型の宇宙船・星は制作者が Adobe Illustrator で手直し)。既存のゲームの絵は使っていません
     商用利用・再配布: 可
 
   img/ui/sound-on.svg, sound-off.svg
@@ -49,7 +49,7 @@ Copyright 2021 The Zen Maru Gothic Project Authors (https://github.com/googlefon
 
 This Font Software is licensed under the SIL Open Font License, Version 1.1.
 This license is copied below, and is also available with a FAQ at:
-https://openfontlicense.org
+http://scripts.sil.org/OFL
 
 
 -----------------------------------------------------------

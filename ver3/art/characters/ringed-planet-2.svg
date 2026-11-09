@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="_レイヤー_1" data-name="レイヤー_1" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 110 60">
+  <!-- Generator: Adobe Illustrator 30.8.2, SVG Export Plug-In . SVG Version: 2.1.4 Build 7)  -->
+  <defs>
+    <style>
+      .st0 {
+        fill: #ffd66b;
+      }
+    </style>
+  </defs>
+  <rect class="st0" x="30" width="50" height="10"/>
+  <rect class="st0" x="20" y="10" width="70" height="10"/>
+  <rect class="st0" x="10" y="30" width="90" height="10"/>
+  <rect class="st0" y="40" width="10" height="10"/>
+  <rect class="st0" x="20" y="40" width="70" height="10"/>
+  <rect class="st0" x="100" y="40" width="10" height="10"/>
+  <rect class="st0" x="30" y="50" width="50" height="10"/>
+  <g>
+    <polygon class="st0" points="30 20 20 20 20 30 30 30 35 30 35 20 30 20"/>
+    <rect class="st0" x="45" y="20" width="20" height="10"/>
+    <polygon class="st0" points="80 20 75 20 75 30 80 30 90 30 90 20 80 20"/>
+  </g>
+</svg>

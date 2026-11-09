@@ -14,7 +14,7 @@ var DICT = {
     title: 'Space Patrol',
     lead: 'Turn the space visitors into stars before they reach the ground!',
     pts: '{n} pts',
-    pts_mystery: '? pts',
+    pts_comet: 'Let comets pass!',
     start: 'Start',
     exit: 'Exit',
     set_level: 'Speed',
@@ -39,6 +39,8 @@ var DICT = {
     move_right: 'Move right',
     sound_on: 'Sound: on', sound_off: 'Sound: off',
     wave_clear: 'Wave {n} cleared!',
+    comet_warn: 'Comet! Don\'t shoot!',
+    comet_broke: 'The comet broke! Dodge the pieces!',
     music_on: 'Music: on', music_off: 'Music: off',
 
     /* 一時停止 */
@@ -66,7 +68,7 @@ var DICT = {
     title: '宇宙パトロール',
     lead: '宇宙人が地上に着く前に、光線で星に変えよう！',
     pts: '{n}点',
-    pts_mystery: '？点',
+    pts_comet: '彗星は撃たずに見送ろう',
     start: 'はじめる',
     exit: 'おわる',
     set_level: '速さ',
@@ -90,6 +92,8 @@ var DICT = {
     move_right: '右へ動く',
     sound_on: '音: オン', sound_off: '音: オフ',
     wave_clear: '第{n}波 クリア！',
+    comet_warn: '彗星だ！ 撃たないで！',
+    comet_broke: '彗星が割れた！ かけらをよけて！',
     music_on: 'BGM: オン', music_off: 'BGM: オフ',
 
     paused: '一時停止中',

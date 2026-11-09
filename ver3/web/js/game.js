@@ -1,4 +1,4 @@
-/* 宇宙パトロール — ゲーム本体(ver14: インベーダー型のシューティング。BGM あり)
+/* 宇宙パトロール — ゲーム本体(ver23: インベーダー型のシューティング。BGM あり)
  * 遊び方: 自分の船を左右に動かし、光線で宇宙人を星に変える。宇宙人の群れは左右に動きながら少しずつ下りてくる。
  *         群れを全部星に変えると次の波へ。宇宙人の弾に当たると船が1つ減る。宇宙人が地上に着くか、船が無くなるとゲームオーバー。
  * 操作: 左右キー=移動、決定か上キー=撃つ(押しっぱなしで連射)、下キー=BGM のオン・オフ、戻る=一時停止。タッチ・マウスは画面のタップ・クリックで撃つ(船は動かない)、下の ◀ ▶ ボタンで移動。
@@ -40,6 +40,10 @@
   var PLAYER_Y = 566, GROUND_Y = 598, LAND_Y = 548;
   var PLAYER_SPEED = 400;     // 1秒に動く量
   var SHOT_SPEED = 760;
+  // 上を横切るもの(ver21)。円盤は撃つと 200点。彗星は撃ってはいけない: 撃つと割れてかけらが降ってくる(見送っても点は入らない。ver22)
+  // ver23: 円盤と彗星は別々の時計で出す。円盤は彗星を入れる前と同じく 20〜30秒ごと、彗星もそれとは別に 20〜30秒ごと
+  // (波の最初の彗星は 12〜18秒後)。どちらかが横切っている間は、もう片方は通り過ぎるのを待ってから出る
+  var SAUCER_PTS = 200, SAUCER_SPEED = 150, COMET_SPEED = 200, ROCK_SPEED = 230;
   var BGM_VOL = 0.35;          // BGM の音量(0〜1)。効果音より控えめ(ver03 で 0.55 から下げた)
 
   /* ===================== 小道具 ===================== */
@@ -124,6 +128,8 @@
     else if (k === 'star') { tone(880, 0.07, 'triangle', 0, 0.06); tone(1320, 0.12, 'triangle', 0.05, 0.05); }
     else if (k === 'march') { if (!bgmPlaying()) tone(MARCH[arg % 4], 0.1, 'triangle', 0, 0.09); }   // BGM が鳴っている間は、群れの足音を鳴らさない
     else if (k === 'ufo') tone(arg ? 620 : 520, 0.06, 'sine', 0, 0.02);
+    else if (k === 'comet') tone(arg ? 1568 : 1319, 0.05, 'sine', 0, 0.015);   // 彗星が通る間の、きらきらした高い音
+    else if (k === 'crack') { tone(300, 0.3, 'square', 0, 0.04, 70); tone(180, 0.35, 'triangle', 0.05, 0.06, 60); }   // 彗星が割れた
     else if (k === 'bonus') { var b = [784, 988, 1175, 1568]; for (i = 0; i < b.length; i++) tone(b[i], 0.12, 'triangle', i * 0.06, 0.05); }
     else if (k === 'hit') { tone(440, 0.5, 'triangle', 0, 0.08, 150); tone(330, 0.5, 'sine', 0.1, 0.05, 110); }
     else if (k === 'ready') { tone(523, 0.12, 'triangle'); tone(784, 0.18, 'triangle', 0.12); }
@@ -206,48 +212,207 @@
   /* ===================== 絵(ドット絵を canvas に描いておく) ===================== */
   // キャラクターの形は本ゲーム用に描いたもの(既存のゲームのキャラクターに似せない [CNT-8])
   // ver13 で全部描き直した(以前の絵は、既存のインベーダーゲームのキャラクターに似ていると指摘を受けたため)
-  //   gem   (30点・黄) 輪のある星の子。輪がゆらゆら傾く
+  // ver16・ver17: 制作者が Adobe Illustrator で手直しした原画(art/characters/*.svg)に差し替えた。
+  //   gem   (30点・黄) 輪のある星の子。2コマ目で輪が下がり、目の形が変わる
   //   eye   (20点・水色) 目のある結晶。まわりに光の粒がまたたく
   //   jelly (10点・桃) 人工衛星ロボ。左右に太陽電池の板、アンテナの灯りが点滅
   //   player       自分の船 = 窓のあるロケット
-  //   ufo          ボーナスの円盤型の宇宙船(ver14)。透けたガラスのドームに小さな操縦士。縁の灯りと下の噴射が2コマでまたたく
+  //   ufo          ボーナスの円盤型の宇宙船。窓の数(3つ/4つ)と下の噴射が2コマで入れ替わる
+  //   comet        ときどき横切る彗星(ver21、Claude 作図。art/characters/comet.svg)。撃ってはいけない
+  //   star         宇宙人が変わる星(ver18: 4方向に光がのびるきらめき)。斜めの形があるので、マス目ではなく下の STAR_SHAPE で描く
+  // 1文字 = 半マス('.' 透明 / 'X' キャラクターの色 / 'W' 白。ver17 の原画では白は使っていない)。原画に半マスずれた四角があるため。
+  // この並びは tools/svg_to_rows.py で SVG から作る。手で直さず、SVG を直してから作り直すこと
   // キー名(gem / eye / jelly / ufo)はプログラムの中の呼び名で、絵の形とは関係ない
   var SPR = {
     gem: [[
-      '...XXXXX...', '..XXXXXXX..', '..X.XXX.X..', 'XXXXXXXXXXX', '..XXXXXXX..', '...XXXXX...'
+      '......XXXXXXXXXX......',
+      '......XXXXXXXXXX......',
+      '....XXXXXXXXXXXXXX....',
+      '....XXXXXXXXXXXXXX....',
+      'XX..XXXX..XX..XXXX..XX',
+      'XX..XXXX..XX..XXXX..XX',
+      '..XXXXXXXXXXXXXXXXXX..',
+      '..XXXXXXXXXXXXXXXXXX..',
+      '....XXXXXXXXXXXXXX....',
+      '....XXXXXXXXXXXXXX....',
+      '......XXXXXXXXXX......',
+      '......XXXXXXXXXX......'
     ], [
-      '...XXXXX...', '..XXXXXXX..', '..X.XXX.X..', '.XXXXXXXXX.', 'X.XXXXXXX.X', '...XXXXX...'
+      '......XXXXXXXXXX......',
+      '......XXXXXXXXXX......',
+      '....XXXXXXXXXXXXXX....',
+      '....XXXXXXXXXXXXXX....',
+      '....XXX..XXXX..XXX....',
+      '....XXX..XXXX..XXX....',
+      '..XXXXXXXXXXXXXXXXXX..',
+      '..XXXXXXXXXXXXXXXXXX..',
+      'XX..XXXXXXXXXXXXXX..XX',
+      'XX..XXXXXXXXXXXXXX..XX',
+      '......XXXXXXXXXX......',
+      '......XXXXXXXXXX......'
     ]],
     eye: [[
-      '....X....', '...XXX...', '..XXXXX..', '.XX.X.XX.', 'XXXXXXXXX', '.XXXXXXX.', '..XXXXX..', '...XXX...'
+      '........XX........',
+      '........XX........',
+      '......XXXXXX......',
+      '......XXXXXX......',
+      '....XXXXXXXXXX....',
+      '....XXXXXXXXXX....',
+      '..XXXX..XX..XXXX..',
+      '..XXXX..XX..XXXX..',
+      'XXXXXXXXXXXXXXXXXX',
+      'XXXXXXXXXXXXXXXXXX',
+      '..XXXXXXXXXXXXXX..',
+      '..XXXXXXXXXXXXXX..',
+      '....XXXXXXXXXX....',
+      '....XXXXXXXXXX....',
+      '......XXXXXX......',
+      '......XXXXXX......'
     ], [
-      'X...X...X', '...XXX...', '..XXXXX..', '.XX.X.XX.', 'XXXXXXXXX', '.XXXXXXX.', '..XXXXX..', 'X..XXX..X'
+      'XX......XX......XX',
+      'XX......XX......XX',
+      '......XXXXXX......',
+      '......XXXXXX......',
+      '....XXXXXXXXXX....',
+      '....XXXXXXXXXX....',
+      '..XXXX..XX..XXXX..',
+      '..XXXX..XX..XXXX..',
+      'XXXXXXXXXXXXXXXXXX',
+      'XXXXXXXXXXXXXXXXXX',
+      '..XXXXXXXXXXXXXX..',
+      '..XXXXXXXXXXXXXX..',
+      '....XXXXXXXXXX....',
+      '....XXXXXXXXXX....',
+      'XX....XXXXXX....XX',
+      'XX....XXXXXX....XX'
     ]],
     jelly: [[
-      '.....X.....', '...XXXXX...', '...X.X.X...', 'XX.XXXXX.XX', 'XXXXXXXXXXX', 'XX.XXXXX.XX', '....X.X....'
+      '..........XX..........',
+      '..........XX..........',
+      '......XXXXXXXXXX......',
+      '......XXXXXXXXXX......',
+      '......XX..XX..XX......',
+      '......XX..XX..XX......',
+      'XXXX..XXXXXXXXXX..XXXX',
+      'XXXX..XXXXXXXXXX..XXXX',
+      'XXXXXXXXXXXXXXXXXXXXXX',
+      'XXXXXXXXXXXXXXXXXXXXXX',
+      'XXXX..XXXXXXXXXX..XXXX',
+      'XXXX..XXXXXXXXXX..XXXX',
+      '........XX..XX........',
+      '........XX..XX........'
     ], [
-      '...........', '...XXXXX...', '...X.X.X...', 'XX.XXXXX.XX', 'XXXXXXXXXXX', 'XX.XXXXX.XX', '...X...X...'
+      '......................',
+      '......................',
+      '......XXXXXXXXXX......',
+      '......XXXXXXXXXX......',
+      '......XX..XX..XX......',
+      '......XX..XX..XX......',
+      'XXXX..XXXXXXXXXX..XXXX',
+      'XXXX..XXXXXXXXXX..XXXX',
+      'XXXXXXXXXXXXXXXXXXXXXX',
+      'XXXXXXXXXXXXXXXXXXXXXX',
+      'XXXX..XXXXXXXXXX..XXXX',
+      'XXXX..XXXXXXXXXX..XXXX',
+      '......XX......XX......',
+      '......XX......XX......'
     ]],
-    player: [['....X....', '...XXX...', '...X.X...', '..XXXXX..', '..XXXXX..', '.XXXXXXX.', 'XX.XXX.XX', 'X..X.X..X']],
+    player: [[
+      '........XX........',
+      '........XX........',
+      '......XXXXXX......',
+      '......XXXXXX......',
+      '......XX..XX......',
+      '......XX..XX......',
+      '....XXXXXXXXXX....',
+      '....XXXXXXXXXX....',
+      '....XXXXXXXXXX....',
+      '....XXXXXXXXXX....',
+      '..XXXXXXXXXXXXXX..',
+      '..XXXXXXXXXXXXXX..',
+      'XXXX..XXXXXX..XXXX',
+      'XXXX..XXXXXX..XXXX',
+      'XX....XX..XX....XX',
+      'XX....XX..XX....XX'
+    ]],
     ufo: [[
-      '......XXXX......', '.....X....X.....', '.....X.XX.X.....', '...XXXXXXXXXX...', 'XXXXXXXXXXXXXXXX', '.XXXXXXXXXXXXXX.', '......XXXX......', '.....X....X.....'
+      '............XXXXXXXX............',
+      '............XXXXXXXX............',
+      '........XXXXXXXXXXXXXXXX........',
+      '........XXXXXXXXXXXXXXXX........',
+      '......XXXXXXXXXXXXXXXXXXXX......',
+      '......XXXXXXXXXXXXXXXXXXXX......',
+      '......XXXXX..XX..XX..XXXXX......',
+      '......XXXXX..XX..XX..XXXXX......',
+      '....XXXXXXXXXXXXXXXXXXXXXXXX....',
+      '....XXXXXXXXXXXXXXXXXXXXXXXX....',
+      '..XXXXXXXXXXXXXXXXXXXXXXXXXXXX..',
+      '..XXXXXXXXXXXXXXXXXXXXXXXXXXXX..',
+      '.....XX..XX..XX..XX..XX..XX.....',
+      '.....XX..XX..XX..XX..XX..XX.....',
+      '.......XX......XX......XX.......',
+      '.......XX......XX......XX.......'
     ], [
-      '......XXXX......', '.....X....X.....', '.....X.XX.X.....', '...XXXXXXXXXX...', '.XXXXXXXXXXXXXX.', '.XXXXXXXXXXXXXX.', '......XXXX......', '....X......X....'
+      '............XXXXXXXX............',
+      '............XXXXXXXX............',
+      '........XXXXXXXXXXXXXXXX........',
+      '........XXXXXXXXXXXXXXXX........',
+      '......XXXXXXXXXXXXXXXXXXXX......',
+      '......XXXXXXXXXXXXXXXXXXXX......',
+      '......XXX..XX..XX..XX..XXX......',
+      '......XXX..XX..XX..XX..XXX......',
+      '....XXXXXXXXXXXXXXXXXXXXXXXX....',
+      '....XXXXXXXXXXXXXXXXXXXXXXXX....',
+      '..XXXXXXXXXXXXXXXXXXXXXXXXXXXX..',
+      '..XXXXXXXXXXXXXXXXXXXXXXXXXXXX..',
+      '.......XX..XX......XX..XX.......',
+      '.......XX..XX......XX..XX.......',
+      '.........XX..........XX.........',
+      '.........XX..........XX.........'
     ]],
-    star: [['..X..', '..X..', 'XXXXX', '.XXX.', '.X.X.']]
+    comet: [[
+      '..................XX..XXXXXX....',
+      '..................XX..XXXXXX....',
+      '..........XX..XXXXXXXXXXXXXXXX..',
+      '..........XX..XXXXXXXXXXXXXXXX..',
+      'XX....XXXXXXXXXXXXXXXXXXWWWWXXXX',
+      'XX....XXXXXXXXXXXXXXXXXXWWWWXXXX',
+      '..XXXX..XXXXXXXXXXXXXXXXWWWWXXXX',
+      '..XXXX..XXXXXXXXXXXXXXXXWWWWXXXX',
+      '..........XX..XXXXXXXXXXXXXXXX..',
+      '..........XX..XXXXXXXXXXXXXXXX..',
+      '..................XX..XXXXXX....',
+      '..................XX..XXXXXX....'
+    ]]
   };
+  // 星の形(ver18)。art/characters/star.svg の四角を多角形の頂点(SVG の単位。10 = 1マス、全体 50x50)にしたもの。
+  // tools/svg_to_rows.py が出す並びを貼っている。手で直さず、SVG を直してから作り直すこと
+  var STAR_SHAPE = [
+    [20.0, 0.0, 30.0, 0.0, 30.0, 50.0, 20.0, 50.0],
+    [0.0, 20.0, 50.0, 20.0, 50.0, 30.0, 0.0, 30.0],
+    [20.43, 25.0, 31.47, 13.96, 42.51, 25.0, 31.47, 36.04],
+    [13.96, 31.46, 25.0, 20.42, 36.04, 31.46, 25.0, 42.5],
+    [13.97, 18.54, 25.01, 7.5, 36.05, 18.54, 25.01, 29.57],
+    [7.5, 25.0, 18.54, 13.97, 29.58, 25.0, 18.54, 36.04]
+  ];
   var COL = {
     bg: '#0E1430', starDim: '#3A4580', starBright: '#C9D2FF', ground: '#2E3A78',
     gem: '#FFD66B', eye: '#7EE0FF', jelly: '#FF8EC2', player: '#6FF2C4', playerHit: '#FF7A6B',
-    shield: '#4FD6A8', ufo: '#FF8A5B', shot: '#FFFFFF', eshot: '#FFB36B', starFx: '#FFE27A'
+    brick: '#C8643C', brickHi: '#E8986A', brickLo: '#8E3F22', brickCrack: '#8A4128', brickCrackLine: '#4A1E10', ufo: '#FF8A5B', comet: '#C9B8FF', rock: '#A99BD6', white: '#FFFFFF', shot: '#FFFFFF', eshot: '#FFB36B', starFx: '#FFE27A'
   };
   var PX = 4;
+  // px は1マスの大きさ。1文字 = 半マスなので、半マスの境目を整数に丸めて隙間やにじみが出ないようにする
   function makeSprite(rows, color, px) {
     var c = document.createElement('canvas');
-    c.width = rows[0].length * px; c.height = rows.length * px;
+    function at(k) { return Math.round(k * px / 2); }
+    c.width = at(rows[0].length); c.height = at(rows.length);
     var g = c.getContext('2d');
-    g.fillStyle = color;
-    for (var y = 0; y < rows.length; y++) for (var x = 0; x < rows[y].length; x++) if (rows[y].charAt(x) === 'X') g.fillRect(x * px, y * px, px, px);
+    for (var y = 0; y < rows.length; y++) for (var x = 0; x < rows[y].length; x++) {
+      var ch = rows[y].charAt(x);
+      if (ch === '.') continue;
+      g.fillStyle = ch === 'W' ? COL.white : color;
+      g.fillRect(at(x), at(y), at(x + 1) - at(x), at(y + 1) - at(y));
+    }
     return c;
   }
   var TYPES = [
@@ -265,7 +430,23 @@
   // 円盤は宇宙人より少し小さい点(3px)で描く。上の表示と一番上の宇宙人の間(y 96〜120)に収まるように
   IMG.ufo = makeSprite(SPR.ufo[0], COL.ufo, 3);      // タイトルの得点表と当たり判定の大きさにも使う
   IMG.ufo2 = makeSprite(SPR.ufo[1], COL.ufo, 3);     // またたく2コマ目
-  IMG.star = makeSprite(SPR.star[0], COL.starFx, PX);
+  IMG.comet = makeSprite(SPR.comet[0], COL.comet, 3);   // 右へ進む彗星
+  IMG.cometL = makeSprite(SPR.comet[0].map(function (r) { return r.split('').reverse().join(''); }), COL.comet, 3);   // 左へ進む彗星(左右反転)
+  // 多角形で描く絵(斜めのふちはなめらかに塗る)。px は1マスの大きさ、size はマス数
+  function makeShape(polys, color, px, size) {
+    var c = document.createElement('canvas');
+    c.width = c.height = size * px;
+    var g = c.getContext('2d'), k = px / 10;
+    g.fillStyle = color;
+    for (var i = 0; i < polys.length; i++) {
+      var q = polys[i];
+      g.beginPath(); g.moveTo(q[0] * k, q[1] * k);
+      for (var j = 2; j < q.length; j += 2) g.lineTo(q[j] * k, q[j + 1] * k);
+      g.closePath(); g.fill();
+    }
+    return c;
+  }
+  IMG.star = makeShape(STAR_SHAPE, COL.starFx, PX, 5);
 
   /* ===================== 遊ぶ場所 ===================== */
   var cv = $('field'), ctx = cv.getContext('2d');
@@ -278,8 +459,8 @@
   var G = {
     mode: 'title', t: 0, paused: false, score: 0, lives: 3, wave: 1, level: LEVELS.normal, levelId: 'normal',
     player: { x: W / 2, w: IMG.player.width, h: IMG.player.height },
-    shots: [], eshots: [], aliens: [], shields: [], parts: [], floats: [], pops: [],
-    ufo: null, ufoTimer: 20, dir: 1, stepTimer: 0, frame: 0, march: 0, eTimer: 1.5,
+    shots: [], eshots: [], rocks: [], aliens: [], shields: [], parts: [], floats: [], pops: [],
+    ufo: null, ufoTimer: 20, cometTimer: 15, dir: 1, stepTimer: 0, frame: 0, march: 0, eTimer: 1.5,
     lastShotAt: 0, lastManualAt: 0, autoAt: 0, why: '', newBest: false
   };
   var TOTAL = 5 * 9;
@@ -294,18 +475,48 @@
     }
     G.dir = 1; G.stepTimer = 0; G.frame = 0;
   }
-  var SB = 6, SCOLS = 20, SROWS = 12, SHIELD_Y = 446;
+  // バリア = レンガの壁(ver20)。レンガは横 24 × 縦 12。1段おきに半分ずらして積む(本物のレンガ積みと同じ)。
+  // 一番上の段は1つおきに置いて、城壁のような凸凹にする。
+  // 1回当たるとひびが入り、2回目で崩れる(宇宙人の弾は1回で崩す)
+  var BRICK_W = 24, BRICK_H = 12, WALL_COLS = 5, WALL_ROWS = 6, SHIELD_Y = 446;
+  var WALL_W = BRICK_W * WALL_COLS, WALL_H = BRICK_H * WALL_ROWS;
   function makeShields() {
     G.shields = [];
-    var sw = SCOLS * SB, gap = (EDGE_R - EDGE_L - 4 * sw) / 5;
+    var gap = (EDGE_R - EDGE_L - 4 * WALL_W) / 5;
     for (var i = 0; i < 4; i++) {
-      var cells = [];
-      for (var r = 0; r < SROWS; r++) for (var c = 0; c < SCOLS; c++) {
-        var corner = r < 3 && (c < 3 - r || c > SCOLS - 4 + r);
-        var arch = r > 7 && c > 5 && c < SCOLS - 6;
-        cells.push(!(corner || arch));
+      var x0 = EDGE_L + gap + i * (WALL_W + gap), bricks = [];
+      for (var r = 0; r < WALL_ROWS; r++) {
+        var y = SHIELD_Y + r * BRICK_H;
+        if (r === 0) {   // 城壁の凸凹
+          for (var c = 0; c < WALL_COLS; c += 2) bricks.push({ x: x0 + c * BRICK_W, y: y, w: BRICK_W, h: BRICK_H, hp: 2 });
+          continue;
+        }
+        var off = r % 2 ? 0 : BRICK_W / 2, bx = x0;
+        if (off) { bricks.push({ x: bx, y: y, w: off, h: BRICK_H, hp: 2 }); bx += off; }   // 端の半分のレンガ
+        while (bx < x0 + WALL_W - 0.5) {
+          var w = Math.min(BRICK_W, x0 + WALL_W - bx);
+          bricks.push({ x: bx, y: y, w: w, h: BRICK_H, hp: 2 }); bx += w;
+        }
       }
-      G.shields.push({ x: EDGE_L + gap + i * (sw + gap), y: SHIELD_Y, cells: cells });
+      G.shields.push({ x: x0, y: SHIELD_Y, bricks: bricks });
+    }
+  }
+  // レンガを1つ傷める。崩れたらかけらを飛ばす
+  function damageBrick(b, n) {
+    b.hp -= n;
+    if (b.hp <= 0) { b.hp = 0; sparkle(b.x + b.w / 2, b.y + b.h / 2, COL.brick, 6); }
+  }
+  // レンガ1つを描く。まわり 1 は目地(すき間)。上のふちは明るく、下のふちは暗くして立体感を出す。ひびの入ったレンガは暗くして割れ目を描く
+  function drawBrick(b) {
+    var x = Math.round(b.x) + 1, y = Math.round(b.y) + 1, w = Math.round(b.w) - 2, h = Math.round(b.h) - 2;
+    var cracked = b.hp === 1;
+    ctx.fillStyle = cracked ? COL.brickCrack : COL.brick; ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = COL.brickHi; ctx.fillRect(x, y, w, 2);
+    ctx.fillStyle = COL.brickLo; ctx.fillRect(x, y + h - 2, w, 2);
+    if (cracked) {   // 割れ目(ジグザグ)
+      ctx.fillStyle = COL.brickCrackLine;
+      var cx = x + Math.floor(w / 2);
+      ctx.fillRect(cx - 1, y + 2, 2, 3); ctx.fillRect(cx + 1, y + 4, 2, 2); ctx.fillRect(cx - 2, y + 6, 2, h - 6);
     }
   }
 
@@ -316,8 +527,10 @@
     startWave();
   }
   function startWave() {
-    G.shots = []; G.eshots = []; G.parts = []; G.floats = []; G.pops = [];
-    G.ufo = null; G.ufoTimer = 18 + Math.random() * 10; G.eTimer = 1.5;
+    // 波の始めは、自分の船を必ずまん中に置く(ver22)。押しっぱなしの移動も止めて、まん中から動き出さないようにする
+    G.player.x = W / 2; stopHolds();
+    G.shots = []; G.eshots = []; G.rocks = []; G.parts = []; G.floats = []; G.pops = [];
+    G.ufo = null; G.ufoTimer = 18 + Math.random() * 10; G.cometTimer = 12 + Math.random() * 6; G.eTimer = 1.5;
     makeFleet(); makeShields();
     setMode('ready');
     showBanner(t('wave_no', { n: G.wave }));
@@ -327,31 +540,30 @@
 
   /* ===================== 当たり判定 ===================== */
   function overlap(ax, ay, aw, ah, bx, by, bw, bh) { return Math.abs(ax - bx) * 2 < aw + bw && Math.abs(ay - by) * 2 < ah + bh; }
-  // 弾がバリアに当たったら、まわりを少し欠けさせる(radius=0 は当たったかどうかだけ)
-  function hitShield(x, y, w, h, radius) {
+  // 弾がレンガに当たったら、そのレンガを傷める(dmg=1 ひび、2 で一度に崩す)。当たったら true
+  // 上向きの弾は一番下の、下向きの弾は一番上のレンガに当たる(弾の進む先で最初にぶつかるもの)
+  function hitShield(x, y, w, h, dmg, up) {
     for (var i = 0; i < G.shields.length; i++) {
       var s = G.shields[i];
-      if (x + w / 2 < s.x || x - w / 2 > s.x + SCOLS * SB || y + h / 2 < s.y || y - h / 2 > s.y + SROWS * SB) continue;
-      var c0 = Math.max(0, Math.floor((x - w / 2 - s.x) / SB)), c1 = Math.min(SCOLS - 1, Math.floor((x + w / 2 - s.x) / SB));
-      var r0 = Math.max(0, Math.floor((y - h / 2 - s.y) / SB)), r1 = Math.min(SROWS - 1, Math.floor((y + h / 2 - s.y) / SB));
-      for (var r = r0; r <= r1; r++) for (var c = c0; c <= c1; c++) {
-        if (!s.cells[r * SCOLS + c]) continue;
-        for (var dr = -radius; dr <= radius; dr++) for (var dc = -radius; dc <= radius; dc++) {
-          var rr = r + dr, cc = c + dc;
-          if (rr < 0 || rr >= SROWS || cc < 0 || cc >= SCOLS) continue;
-          if (Math.abs(dr) + Math.abs(dc) <= radius || Math.random() < 0.35) s.cells[rr * SCOLS + cc] = false;
-        }
-        return true;
+      if (x + w / 2 < s.x || x - w / 2 > s.x + WALL_W || y + h / 2 < s.y || y - h / 2 > s.y + WALL_H) continue;
+      var hit = null;
+      for (var k = 0; k < s.bricks.length; k++) {
+        var b = s.bricks[k];
+        if (b.hp <= 0 || !overlap(b.x + b.w / 2, b.y + b.h / 2, b.w, b.h, x, y, w, h)) continue;
+        if (!hit || (up ? b.y > hit.y : b.y < hit.y)) hit = b;
       }
+      if (hit) { damageBrick(hit, dmg); return true; }
     }
     return false;
   }
+  // 下りてきた宇宙人が重なったレンガは崩す
   function eraseShieldUnder(a) {
     for (var i = 0; i < G.shields.length; i++) {
       var s = G.shields[i];
-      if (a.y + a.h / 2 < s.y || a.y - a.h / 2 > s.y + SROWS * SB) continue;
-      for (var r = 0; r < SROWS; r++) for (var c = 0; c < SCOLS; c++) {
-        if (s.cells[r * SCOLS + c] && overlap(s.x + c * SB + SB / 2, s.y + r * SB + SB / 2, SB, SB, a.x, a.y, a.w, a.h)) s.cells[r * SCOLS + c] = false;
+      if (a.y + a.h / 2 < s.y || a.y - a.h / 2 > s.y + WALL_H) continue;
+      for (var k = 0; k < s.bricks.length; k++) {
+        var b = s.bricks[k];
+        if (b.hp > 0 && overlap(b.x + b.w / 2, b.y + b.h / 2, b.w, b.h, a.x, a.y, a.w, a.h)) damageBrick(b, 2);
       }
     }
   }
@@ -377,12 +589,19 @@
     G.shots.push({ x: G.player.x, y: PLAYER_Y - G.player.h / 2 - 8 });
     sfx('shoot');
   }
+  // 彗星を撃ってしまった: 割れて、かけらが3つ降ってくる
+  function breakComet() {
+    var u = G.ufo, v = ROCK_SPEED * G.level.eSpeed;
+    sparkle(u.x, u.y, COL.comet, 20); sfx('crack');
+    for (var k = -1; k <= 1; k++) G.rocks.push({ x: u.x + k * 14, y: u.y + 10, vx: k * 70, vy: v * (1 - Math.abs(k) * 0.12), t: 0 });
+    showToast(t('comet_broke'));
+  }
   function playerHit() {
     if (G.mode !== 'play') return;
     sparkle(G.player.x, PLAYER_Y, COL.playerHit, 18);
     sfx('hit');
     G.lives = Math.max(0, G.lives - 1);
-    G.eshots = [];
+    G.eshots = []; G.rocks = [];
     setMode('hit');
   }
   function gameOver(why) {
@@ -476,7 +695,7 @@
       var sh = G.shots[i], gone = false;
       sh.y -= SHOT_SPEED * dt;
       if (sh.y < 90) gone = true;
-      else if (hitShield(sh.x, sh.y, 4, 16, 1)) gone = true;
+      else if (hitShield(sh.x, sh.y, 4, 16, 1, true)) gone = true;
       else {
         for (var a = 0; a < G.aliens.length; a++) {
           var al = G.aliens[a];
@@ -490,9 +709,12 @@
           }
         }
         if (!gone && G.ufo && overlap(sh.x, sh.y, 4, 16, G.ufo.x, G.ufo.y, IMG.ufo.width, IMG.ufo.height)) {
-          G.score = Math.min(9999999, G.score + G.ufo.pts);
-          G.pops.push({ x: G.ufo.x, y: G.ufo.y, text: fmtNum(G.ufo.pts), life: 1.3 });
-          sparkle(G.ufo.x, G.ufo.y, COL.ufo, 18); sfx('bonus');
+          if (G.ufo.kind === 'comet') breakComet();
+          else {
+            G.score = Math.min(9999999, G.score + SAUCER_PTS);
+            G.pops.push({ x: G.ufo.x, y: G.ufo.y, text: fmtNum(SAUCER_PTS), life: 1.3, color: COL.ufo });
+            sparkle(G.ufo.x, G.ufo.y, COL.ufo, 18); sfx('bonus');
+          }
           G.ufo = null; gone = true;
         }
         if (!gone) {
@@ -527,23 +749,34 @@
       var es = G.eshots[i], drop = false;
       es.y += es.v * dt; es.t += dt;
       if (es.y > GROUND_Y - 6) { sparkle(es.x, GROUND_Y - 4, COL.eshot, 4); drop = true; }
-      else if (hitShield(es.x, es.y, 8, 18, 2)) drop = true;
+      else if (hitShield(es.x, es.y, 8, 18, 2, false)) drop = true;
       else if (overlap(es.x, es.y, 8, 18, G.player.x, PLAYER_Y, G.player.w - 8, G.player.h)) { G.eshots.splice(i, 1); playerHit(); return; }
       if (drop) G.eshots.splice(i, 1);
     }
 
-    // ときどき横切る円盤(当てるとボーナス)
-    G.ufoTimer -= dt;
-    if (!G.ufo && G.ufoTimer <= 0) {
-      var dir = Math.random() < 0.5 ? 1 : -1;
-      G.ufo = { x: dir > 0 ? -40 : W + 40, y: 108, dir: dir, pts: [50, 100, 150, 300][Math.floor(Math.random() * 4)], beep: 0 };
-      G.ufoTimer = 22 + Math.random() * 10;
+    // ときどき上を横切るもの: 円盤(撃つと 200点)と彗星(撃ってはいけない)。それぞれ別の時計で出す(ver23)
+    // 円盤の時計は彗星を入れる前と同じ進み方。横切る通り道は1本なので、時間が来てもどちらかが通っている間は待つ
+    G.ufoTimer -= dt; G.cometTimer -= dt;
+    if (!G.ufo && (G.ufoTimer <= 0 || G.cometTimer <= 0)) {
+      var dir = Math.random() < 0.5 ? 1 : -1, isComet = G.cometTimer <= G.ufoTimer;   // 先に時間が来た方を出す
+      G.ufo = { kind: isComet ? 'comet' : 'saucer', x: dir > 0 ? -40 : W + 40, y: 108, dir: dir, beep: 0 };
+      if (isComet) G.cometTimer = 20 + Math.random() * 10; else G.ufoTimer = 22 + Math.random() * 10;
     }
     if (G.ufo) {
-      G.ufo.x += G.ufo.dir * 150 * dt;
+      var comet = G.ufo.kind === 'comet';
+      G.ufo.x += G.ufo.dir * (comet ? COMET_SPEED : SAUCER_SPEED) * dt;
       G.ufo.beep += dt;
-      if (G.ufo.beep > 0.25) { G.ufo.beep = 0; G.ufo.hi = !G.ufo.hi; sfx('ufo', G.ufo.hi); }
-      if (G.ufo.x < -80 || G.ufo.x > W + 80) G.ufo = null;
+      if (G.ufo.beep > (comet ? 0.18 : 0.25)) { G.ufo.beep = 0; G.ufo.hi = !G.ufo.hi; sfx(comet ? 'comet' : 'ufo', G.ufo.hi); }
+      if (G.ufo.x < -80 || G.ufo.x > W + 80) G.ufo = null;   // 彗星は見送っても点は入らない(ver22)
+    }
+    // 割れた彗星のかけら(当たると船が1つ減る。レンガの壁で止まる)
+    for (i = G.rocks.length - 1; i >= 0; i--) {
+      var rk = G.rocks[i], rgone = false;
+      rk.x += rk.vx * dt; rk.y += rk.vy * dt; rk.t += dt;
+      if (rk.y > GROUND_Y - 6) { sparkle(rk.x, GROUND_Y - 4, COL.rock, 4); rgone = true; }
+      else if (hitShield(rk.x, rk.y, 12, 12, 2, false)) rgone = true;
+      else if (overlap(rk.x, rk.y, 12, 12, G.player.x, PLAYER_Y, G.player.w - 8, G.player.h)) { G.rocks.splice(i, 1); playerHit(); return; }
+      if (rgone) G.rocks.splice(i, 1);
     }
   }
 
@@ -561,13 +794,21 @@
 
     ctx.fillStyle = COL.ground; ctx.fillRect(EDGE_L - 30, GROUND_Y, EDGE_R - EDGE_L + 60, 3);
 
-    ctx.fillStyle = COL.shield;
     for (i = 0; i < G.shields.length; i++) {
-      var sd = G.shields[i];
-      for (var c = 0; c < sd.cells.length; c++) if (sd.cells[c]) ctx.fillRect(sd.x + (c % SCOLS) * SB, sd.y + Math.floor(c / SCOLS) * SB, SB, SB);
+      var bs = G.shields[i].bricks;
+      for (var k = 0; k < bs.length; k++) if (bs[k].hp > 0) drawBrick(bs[k]);
     }
     for (i = 0; i < G.aliens.length; i++) { var a = G.aliens[i]; if (a.alive) spr(IMG[a.t.key][G.frame], a.x, a.y); }
-    if (G.ufo) spr(Math.floor(G.t / 200) % 2 ? IMG.ufo2 : IMG.ufo, G.ufo.x, G.ufo.y);   // 0.2秒ごとに灯りと噴射がまたたく
+    if (G.ufo) {
+      if (G.ufo.kind === 'comet') {
+        spr(G.ufo.dir > 0 ? IMG.comet : IMG.cometL, G.ufo.x, G.ufo.y);   // 彗星は進む向きに頭を向ける
+      } else spr(Math.floor(G.t / 200) % 2 ? IMG.ufo2 : IMG.ufo, G.ufo.x, G.ufo.y);   // 0.2秒ごとに窓と噴射が入れ替わる
+    }
+    for (i = 0; i < G.rocks.length; i++) {   // 彗星のかけら(くるくる回る小さな石)
+      var rk = G.rocks[i], sz = Math.floor(rk.t * 8) % 2 ? 10 : 12;
+      ctx.fillStyle = COL.rock; ctx.fillRect(Math.round(rk.x - sz / 2), Math.round(rk.y - sz / 2), sz, sz);
+      ctx.fillStyle = COL.comet; ctx.fillRect(Math.round(rk.x - sz / 2), Math.round(rk.y - sz / 2), sz, 3);
+    }
 
     ctx.fillStyle = COL.shot;
     for (i = 0; i < G.shots.length; i++) ctx.fillRect(Math.round(G.shots[i].x - 2), Math.round(G.shots[i].y - 8), 4, 16);
@@ -590,8 +831,8 @@
     for (i = 0; i < G.floats.length; i++) { ctx.globalAlpha = Math.max(0, Math.min(1, G.floats[i].life * 1.6)); spr(IMG.star, G.floats[i].x, G.floats[i].y); }
     ctx.globalAlpha = 1;
     if (G.pops.length) {
-      ctx.font = '700 26px "Zen Maru Gothic", "Noto Sans JP", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = COL.ufo;
-      for (i = 0; i < G.pops.length; i++) ctx.fillText(G.pops[i].text, G.pops[i].x, G.pops[i].y);
+      ctx.font = '700 26px "Zen Maru Gothic", "Noto Sans JP", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      for (i = 0; i < G.pops.length; i++) { ctx.fillStyle = G.pops[i].color || COL.ufo; ctx.fillText(G.pops[i].text, G.pops[i].x, G.pops[i].y); }
     }
   }
 
@@ -601,6 +842,8 @@
   function drawHud() {
     if (!isOn('game')) return;
     setText('scoreV', fmtNum(G.score));
+    // 彗星が出ている間は、上の表示に「撃たないで!」を出す(点滅はさせない [CNT-9])
+    setText('cometWarn', G.ufo && G.ufo.kind === 'comet' && G.mode === 'play' ? t('comet_warn') : '');
     setText('bestV', fmtNum(Math.max(best[G.levelId], G.score)));
     setText('waveV', t('wave_no', { n: G.wave }));
     setText('livesV', fmtNum(G.lives));
@@ -965,10 +1208,11 @@
   /* ===================== 起動 ===================== */
   // タイトルの得点表(宇宙人の絵は上で描いたドット絵を使う)
   function buildPoints() {
-    var box = $('points'), items = [[IMG.gem[0], t('pts', { n: 30 })], [IMG.eye[0], t('pts', { n: 20 })], [IMG.jelly[0], t('pts', { n: 10 })], [IMG.ufo, t('pts_mystery')]];
+    var box = $('points'), items = [[IMG.gem[0], t('pts', { n: 30 })], [IMG.eye[0], t('pts', { n: 20 })], [IMG.jelly[0], t('pts', { n: 10 })], [IMG.ufo, t('pts', { n: SAUCER_PTS })], [IMG.comet, t('pts_comet'), 'small']];
     for (var i = 0; i < items.length; i++) {
       var d = document.createElement('div'); d.className = 'pt';
       var im = document.createElement('img'); im.alt = '';
+      if (items[i][2]) im.className = items[i][2];   // 彗星は横に長いので一回り小さく出す(ver22)
       try { im.src = items[i][0].toDataURL('image/png'); } catch (e) {}
       var s = document.createElement('span'); s.textContent = items[i][1];
       d.appendChild(im); d.appendChild(s); box.appendChild(d);

@@ -18,9 +18,9 @@
 
 /* 同梱した書体(Zen Maru Gothic、SIL OFL 1.1)。ゲームで使う文字だけに絞ったもの。作り直しは tools/make_fonts.py */
 @font-face { font-family: "Zen Maru Gothic"; font-weight: 500; font-style: normal; font-display: block;
-  src: url("../fonts/zenmaru-500.woff?v=5") format("woff"); }
+  src: url("../fonts/zenmaru-500.woff?v=22") format("woff"); }
 @font-face { font-family: "Zen Maru Gothic"; font-weight: 700; font-style: normal; font-display: block;
-  src: url("../fonts/zenmaru-700.woff?v=5") format("woff"); }
+  src: url("../fonts/zenmaru-700.woff?v=22") format("woff"); }
 
 * { box-sizing: border-box; }
 html, body {
@@ -71,6 +71,7 @@ img { -webkit-user-drag: none; }
 .pt { display: flex; align-items: center; font-size: calc(var(--u) * 1.8); font-weight: 700; color: var(--muted); }
 .pt + .pt { margin-left: calc(var(--u) * 3); }
 .pt img { height: calc(var(--u) * 2.4); width: auto; margin-right: calc(var(--u) * 0.8); image-rendering: pixelated; }
+.pt img.small { height: calc(var(--u) * 1.8); }   /* 彗星は横に長いので一回り小さく(ver22) */
 .row { display: flex; justify-content: center; align-items: center; }
 .row .btn + .btn { margin-left: calc(var(--u) * 2.4); }
 .settings { display: flex; flex-direction: column; align-items: center; margin-top: calc(var(--u) * 2); }
@@ -132,6 +133,8 @@ body.kbd .choice.is-focus { border-color: #fff; }
 .hItem { display: flex; align-items: baseline; margin-right: calc(var(--u) * 3.2); white-space: nowrap; }
 .hLabel { font-size: calc(var(--u) * 1.6); color: var(--muted); margin-right: calc(var(--u) * 0.8); }
 .hVal { font-size: calc(var(--u) * 2.3); font-weight: 700; font-variant-numeric: tabular-nums; }
+/* 彗星が出ている間の「撃たないで!」(ver21)。得点などとボタンの間の空きに出す。入りきらないときは2行になる */
+.hWarn { flex: 1 1 auto; min-width: 0; text-align: center; font-size: calc(var(--u) * 2.1); font-weight: 700; line-height: 1.1; word-break: keep-all; color: #C9B8FF; margin-right: calc(var(--u) * 1.6); }
 .hTools { display: flex; align-items: center; margin-left: auto; }
 .tbtn {
   height: calc(var(--u) * 4.6); border-radius: calc(var(--u) * 2.4); cursor: pointer; font-weight: 700;
